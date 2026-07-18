@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+@theme {
+  --color-primary: #2563EB;
+  --color-secondary: #1E40AF;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-bg-light: #F8FAFC;
+  --color-bg-dark: #0F172A;
+  --font-primary: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-light text-slate-800 font-primary dark:bg-bg-dark dark:text-slate-200;
+  }
+}

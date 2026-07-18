@@ -1,0 +1,129 @@
+const User = require('../models/User');
+const { generateToken } = require('../utils/jwt');
+const { validationResult } = require('express-validator');
+
+// @desc    Register user (Customer or Manufacturer)
+// @route   POST /api/auth/register
+// @access  Public
+const register = async (req, res) => {
+  // Validate request
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.error('Validation Error', 400, errors.array());
+  }
+
+  const { role, email, password, firstName, lastName, phone, companyName, manufacturerName, companyAddress, country, businessRegistrationNumber, website } = req.body;
+
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.error('User already exists with this email', 400);
+    }
+
+    const userData = {
+      role,
+      email,
+      password,
+      phone
+    };
+
+    if (role === 'customer') {
+      userData.firstName = firstName;
+      userData.lastName = lastName;
+      userData.status = 'active'; // Customers are active immediately
+    } else if (role === 'manufacturer') {
+      userData.companyName = companyName;
+      userData.manufacturerName = manufacturerName;
+      userData.companyAddress = companyAddress;
+      userData.country = country;
+      userData.businessRegistrationNumber = businessRegistrationNumber;
+      userData.website = website;
+      userData.status = 'pending'; // Manufacturers need admin approval
+    } else {
+      return res.error('Invalid role specified', 400);
+    }
+
+    const user = await User.create(userData);
+
+    if (user) {
+      res.success({
+        _id: user._id,
+        role: user.role,
+        email: user.email,
+        status: user.status,
+        token: generateToken(user._id)
+      }, 'Registration successful', 201);
+    } else {
+      res.error('Invalid user data', 400);
+    }
+  } catch (error) {
+    console.error(error);
+    res.error('Server error during registration', 500);
+  }
+};
+
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+const login = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.error('Validation Error', 400, errors.array());
+  }
+
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user) {
+      return res.error('Invalid email or password', 401);
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.error('Invalid email or password', 401);
+    }
+
+    if (user.status === 'pending') {
+      return res.error('Your account is pending admin approval', 403);
+    }
+    if (user.status === 'rejected' || user.status === 'suspended') {
+      return res.error('Your account is restricted', 403);
+    }
+
+    res.success({
+      _id: user._id,
+      role: user.role,
+      email: user.email,
+      status: user.status,
+      token: generateToken(user._id)
+    }, 'Login successful');
+  } catch (error) {
+    console.error(error);
+    res.error('Server error during login', 500);
+  }
+};
+
+// @desc    Get current logged in user
+// @route   GET /api/auth/me
+// @access  Private
+const getMe = async (req, res) => {
+  try {
+    // req.user is populated by the protect middleware
+    res.success({
+      _id: req.user._id,
+      role: req.user.role,
+      email: req.user.email,
+      status: req.user.status,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      companyName: req.user.companyName
+    });
+  } catch (error) {
+    console.error(error);
+    res.error('Server error fetching profile', 500);
+  }
+};
+
+module.exports = { register, login, getMe };

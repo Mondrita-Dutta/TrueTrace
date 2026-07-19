@@ -38,7 +38,7 @@ const register = async (req, res) => {
       userData.country = country;
       userData.businessRegistrationNumber = businessRegistrationNumber;
       userData.website = website;
-      userData.status = 'pending'; // Manufacturers need admin approval
+      userData.status = 'active'; // TEMPORARY DEV OVERRIDE: Automatically activate manufacturers (usually 'pending')
     } else {
       return res.error('Invalid role specified', 400);
     }
@@ -58,7 +58,7 @@ const register = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.error('Server error during registration', 500);
+    res.error('Server error during registration: ' + error.message, 500);
   }
 };
 
@@ -85,9 +85,10 @@ const login = async (req, res) => {
       return res.error('Invalid email or password', 401);
     }
 
-    if (user.status === 'pending') {
-      return res.error('Your account is pending admin approval', 403);
-    }
+    // TEMPORARY DEV OVERRIDE: Disable pending check
+    // if (user.status === 'pending') {
+    //   return res.error('Your account is pending admin approval', 403);
+    // }
     if (user.status === 'rejected' || user.status === 'suspended') {
       return res.error('Your account is restricted', 403);
     }
@@ -118,7 +119,12 @@ const getMe = async (req, res) => {
       status: req.user.status,
       firstName: req.user.firstName,
       lastName: req.user.lastName,
-      companyName: req.user.companyName
+      companyName: req.user.companyName,
+      phone: req.user.phone,
+      companyAddress: req.user.companyAddress,
+      businessRegistrationNumber: req.user.businessRegistrationNumber,
+      country: req.user.country,
+      website: req.user.website
     });
   } catch (error) {
     console.error(error);
@@ -126,4 +132,46 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.firstName = req.body.firstName || user.firstName;
+      user.lastName = req.body.lastName || user.lastName;
+      user.companyName = req.body.companyName || user.companyName;
+      user.phone = req.body.phone || user.phone;
+      user.companyAddress = req.body.companyAddress || user.companyAddress;
+      user.businessRegistrationNumber = req.body.businessRegistrationNumber || user.businessRegistrationNumber;
+      user.country = req.body.country || user.country;
+      user.website = req.body.website || user.website;
+
+      const updatedUser = await user.save();
+
+      res.success({
+        _id: updatedUser._id,
+        role: updatedUser.role,
+        email: updatedUser.email,
+        status: updatedUser.status,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        companyName: updatedUser.companyName,
+        phone: updatedUser.phone,
+        companyAddress: updatedUser.companyAddress,
+        businessRegistrationNumber: updatedUser.businessRegistrationNumber,
+        country: updatedUser.country,
+        website: updatedUser.website
+      }, 'Profile updated successfully');
+    } else {
+      res.error('User not found', 404);
+    }
+  } catch (error) {
+    console.error(error);
+    res.error('Server error updating profile', 500);
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile };

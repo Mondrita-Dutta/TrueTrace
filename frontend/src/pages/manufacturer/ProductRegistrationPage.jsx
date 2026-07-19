@@ -6,6 +6,20 @@ import { toast } from 'react-toastify';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import productService from '../../services/productService';
 
+const categories = [
+  "Apparel",
+  "Automotive",
+  "Cosmetics",
+  "Electronics",
+  "Food & Beverage",
+  "Furniture",
+  "Jewelry",
+  "Luxury Goods",
+  "Other",
+  "Pharmaceuticals",
+  "Toys"
+];
+
 const ProductRegistrationPage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,6 +29,7 @@ const ProductRegistrationPage = () => {
     productName: '',
     brandName: '',
     category: '',
+    customCategory: '',
     description: '',
     batchNumber: '',
     serialNumber: '',
@@ -44,6 +59,10 @@ const ProductRegistrationPage = () => {
         newErrors[field] = 'This field is required';
       }
     });
+
+    if (formData.category === 'Other' && (!formData.customCategory || !formData.customCategory.trim())) {
+      newErrors.customCategory = 'Please specify the category';
+    }
 
     if (formData.manufacturingDate) {
       const mfgDate = new Date(formData.manufacturingDate);
@@ -98,7 +117,15 @@ const ProductRegistrationPage = () => {
       setIsSubmitting(true);
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
-        if (formData[key]) submitData.append(key, formData[key]);
+        if (key === 'category') {
+          if (formData.category === 'Other') {
+            submitData.append('category', formData.customCategory);
+          } else if (formData.category) {
+            submitData.append('category', formData.category);
+          }
+        } else if (key !== 'customCategory' && formData[key]) {
+          submitData.append(key, formData[key]);
+        }
       });
       if (imageFile) {
         submitData.append('productImage', imageFile);
@@ -139,7 +166,7 @@ const ProductRegistrationPage = () => {
   const resetForm = () => {
     setSuccessData(null);
     setFormData({
-      productName: '', brandName: '', category: '', description: '',
+      productName: '', brandName: '', category: '', customCategory: '', description: '',
       batchNumber: '', serialNumber: '', manufacturingDate: '',
       expiryDate: '', countryOfOrigin: '', manufacturerName: '',
       manufacturerCompany: '', warrantyPeriod: '', additionalNotes: ''
@@ -285,13 +312,17 @@ const ProductRegistrationPage = () => {
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Category <span className="text-danger">*</span></label>
                   <select name="category" value={formData.category} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.category ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`}>
                     <option value="">Select Category...</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Pharmaceuticals">Pharmaceuticals</option>
-                    <option value="Luxury Goods">Luxury Goods</option>
-                    <option value="Apparel">Apparel</option>
-                    <option value="Food & Beverage">Food & Beverage</option>
-                    <option value="Automotive">Automotive</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
+                  {formData.category === 'Other' && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Specify Category <span className="text-danger">*</span></label>
+                      <input type="text" name="customCategory" value={formData.customCategory} onChange={handleChange} placeholder="Enter your custom category" className={`w-full p-3 rounded-xl border ${errors.customCategory ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
+                      {errors.customCategory && <p className="text-danger text-xs mt-1">{errors.customCategory}</p>}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="md:col-span-2">

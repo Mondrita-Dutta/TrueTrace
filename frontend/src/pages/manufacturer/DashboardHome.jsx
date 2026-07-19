@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import { FiBox, FiCheckCircle, FiMaximize, FiBarChart2, FiAlertTriangle, FiPlus } from 'react-icons/fi';
 import StatCard from '../../components/dashboard/StatCard';
@@ -8,6 +9,7 @@ import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import { CardSkeleton } from '../../components/dashboard/LoadingSkeleton';
 
 const DashboardHome = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
 
   // Simulate data fetching
@@ -57,7 +59,7 @@ const DashboardHome = () => {
             <span>Verified Manufacturer</span>
           </div>
           <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
-            Welcome back, TechCorp Inc.
+            Welcome back, {user?.companyName || user?.firstName || 'Manufacturer'}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 max-w-2xl">
             Here's what's happening with your products today. You have generated 500 new QR codes and received 12 new scans in the last 24 hours.

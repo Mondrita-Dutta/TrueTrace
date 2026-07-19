@@ -3,10 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiBell, FiMenu, FiMoon, FiSun, FiUser, FiSettings, FiHelpCircle, FiLogOut } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
   const { isDark, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const getInitials = () => {
+    const name = user?.companyName || user?.firstName || 'User';
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between transition-colors">
@@ -65,10 +72,10 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
             className="flex items-center space-x-3 p-1 pr-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              TC
+              {getInitials()}
             </div>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden xl:block">
-              TechCorp Inc.
+              {user?.companyName || user?.firstName || 'Manufacturer'}
             </span>
           </button>
 
@@ -87,8 +94,8 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
                   className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden z-50"
                 >
                   <div className="p-4 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">TechCorp Inc.</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">admin@techcorp.com</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.companyName || user?.firstName || 'Manufacturer'}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || 'admin@techcorp.com'}</p>
                   </div>
                   <div className="py-2">
                     <Link to="/manufacturer/profile" className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
@@ -102,7 +109,7 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
                     </Link>
                   </div>
                   <div className="border-t border-slate-100 dark:border-slate-700 py-2">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <button onClick={logout} className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                       <FiLogOut className="mr-3 w-4 h-4" /> Logout
                     </button>
                   </div>

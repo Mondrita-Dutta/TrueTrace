@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const ProductTemplate = require('../models/ProductTemplate');
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
@@ -328,5 +329,165 @@ exports.publishToBlockchain = async (req, res) => {
   } catch (error) {
     console.error('Publish to blockchain error:', error);
     return res.error(error.message || 'Failed to publish to blockchain', 500);
+  }
+};
+
+// --- TEMPLATE ENDPOINTS ---
+
+exports.getTemplates = async (req, res) => {
+  try {
+    const templates = await ProductTemplate.find({ manufacturerId: req.user.id }).sort({ createdAt: -1 });
+    return res.success(templates, 'Templates fetched successfully');
+  } catch (error) {
+    console.error('Get templates error:', error);
+    return res.error('Failed to fetch templates', 500);
+  }
+};
+
+exports.createTemplate = async (req, res) => {
+  try {
+    const { templateName, productName, category, brandName, manufacturerName, manufacturerCompany, description, countryOfOrigin, warrantyPeriod, additionalNotes } = req.body;
+    
+    const template = new ProductTemplate({
+      templateName, productName, category, brandName, manufacturerName, manufacturerCompany,
+      description, countryOfOrigin, warrantyPeriod, additionalNotes,
+      manufacturerId: req.user.id
+    });
+    
+    const savedTemplate = await template.save();
+    return res.success(savedTemplate, 'Template created successfully', 201);
+  } catch (error) {
+    console.error('Create template error:', error);
+    return res.error(error.message, 500);
+  }
+};
+
+exports.deleteTemplate = async (req, res) => {
+  try {
+    const result = await ProductTemplate.findOneAndDelete({ _id: req.params.id, manufacturerId: req.user.id });
+    if (!result) return res.error('Template not found', 404);
+    return res.success(null, 'Template deleted successfully');
+  } catch (error) {
+    console.error('Delete template error:', error);
+    return res.error('Failed to delete template', 500);
+  }
+};
+
+// --- BATCH & BULK REGISTRATION ---
+
+exports.createProductBatch = async (req, res) => {
+  try {
+    const { quantity, ...productData } = req.body;
+    const qty = parseInt(quantity);
+    if (!qty || qty < 1 || qty > 500) {
+      return res.error('Valid quantity between 1 and 500 is required', 400);
+    }
+
+    const {
+      productName, category, brandName, description,
+      batchNumber, manufacturingDate, expiryDate, countryOfOrigin, status,
+      manufacturerName, manufacturerCompany, warrantyPeriod, additionalNotes
+    } = productData;
+
+    if (!batchNumber) return res.error('Batch number is required for batch registration', 400);
+
+    const currentYear = new Date().getFullYear();
+    let productCount = await Product.countDocuments();
+    
+    const productsToSave = [];
+    
+    for (let i = 1; i <= qty; i++) {
+      productCount++;
+      const sequence = String(productCount).padStart(6, '0');
+      const productId = `TT-${currentYear}-${sequence}`;
+      const serialNumber = `${batchNumber}-${String(i).padStart(4, '0')}`;
+      
+      const qrDataPayload = {
+        productId,
+        manufacturerId: req.user.id,
+        timestamp: new Date().toISOString(),
+      };
+      const qrDataString = JSON.stringify(qrDataPayload);
+      
+      const qrFilename = `qr-${productId}.png`;
+      const qrFilePath = path.join(qrDir, qrFilename);
+      await QRCode.toFile(qrFilePath, qrDataString, {
+        errorCorrectionLevel: 'H', width: 400, margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+      const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;
+      
+      productsToSave.push(new Product({
+        productId, productName, category, brandName, manufacturerName, manufacturerCompany,
+        manufacturerId: req.user.id, description, batchNumber, serialNumber,
+        manufacturingDate, expiryDate, countryOfOrigin, warrantyPeriod, additionalNotes,
+        status: status || 'Pending Blockchain', qrData: qrDataString, qrImageUrl
+      }));
+    }
+
+    const savedProducts = await Product.insertMany(productsToSave);
+    return res.success(savedProducts, `${qty} products registered successfully`, 201);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.error('A serial number in this batch already exists. Ensure batch numbers are unique.', 400);
+    }
+    console.error('Create product batch error:', error);
+    return res.error(error.message, 500);
+  }
+};
+
+exports.bulkCreateProducts = async (req, res) => {
+  try {
+    const productsData = req.body.products;
+    if (!Array.isArray(productsData) || productsData.length === 0) {
+      return res.error('No products provided', 400);
+    }
+    if (productsData.length > 500) {
+      return res.error('Maximum 500 products allowed per bulk upload', 400);
+    }
+
+    const currentYear = new Date().getFullYear();
+    let productCount = await Product.countDocuments();
+    
+    const productsToSave = [];
+    
+    for (const p of productsData) {
+      productCount++;
+      const sequence = String(productCount).padStart(6, '0');
+      const productId = `TT-${currentYear}-${sequence}`;
+      
+      const qrDataPayload = {
+        productId,
+        manufacturerId: req.user.id,
+        timestamp: new Date().toISOString(),
+      };
+      const qrDataString = JSON.stringify(qrDataPayload);
+      
+      const qrFilename = `qr-${productId}.png`;
+      const qrFilePath = path.join(qrDir, qrFilename);
+      await QRCode.toFile(qrFilePath, qrDataString, {
+        errorCorrectionLevel: 'H', width: 400, margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+      const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;
+      
+      productsToSave.push(new Product({
+        ...p,
+        productId,
+        manufacturerId: req.user.id,
+        status: p.status || 'Pending Blockchain',
+        qrData: qrDataString,
+        qrImageUrl
+      }));
+    }
+
+    const savedProducts = await Product.insertMany(productsToSave);
+    return res.success(savedProducts, `${savedProducts.length} products bulk created successfully`, 201);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.error('Duplicate serial number detected in bulk upload.', 400);
+    }
+    console.error('Bulk create error:', error);
+    return res.error(error.message, 500);
   }
 };

@@ -1,61 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiCheckCircle, FiUploadCloud, FiImage, FiChevronLeft, FiPrinter, FiDownload, FiCopy, FiArrowRight, FiBox } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCheckCircle, FiUploadCloud, FiImage, FiChevronLeft, FiPrinter, FiDownload, FiCopy, FiArrowRight, FiBox, FiList, FiFileText } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import Papa from 'papaparse';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import productService from '../../services/productService';
+import * as templateService from '../../services/templateService';
 
 const categories = [
-  "Apparel",
-  "Automotive",
-  "Cosmetics",
-  "Electronics",
-  "Food & Beverage",
-  "Furniture",
-  "Jewelry",
-  "Luxury Goods",
-  "Other",
-  "Pharmaceuticals",
-  "Toys"
+  "Apparel", "Automotive", "Cosmetics", "Electronics",
+  "Food & Beverage", "Furniture", "Jewelry", "Luxury Goods",
+  "Other", "Pharmaceuticals", "Toys"
 ];
 
 const ProductRegistrationPage = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successData, setSuccessData] = useState(null); // { productId, qrImageUrl, ... }
+  const [mode, setMode] = useState('single'); // 'single', 'batch', 'bulk'
   
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState(null); // Result object
+  const [batchSuccess, setBatchSuccess] = useState(false);
+  const [bulkSuccess, setBulkSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Templates
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+
+  // Batch
+  const [quantity, setQuantity] = useState('');
+
+  // Bulk
+  const [csvFile, setCsvFile] = useState(null);
+  const [parsedCsvData, setParsedCsvData] = useState([]);
+
   const [formData, setFormData] = useState({
-    productName: '',
-    brandName: '',
-    category: '',
-    customCategory: '',
-    description: '',
-    batchNumber: '',
-    serialNumber: '',
-    manufacturingDate: '',
-    expiryDate: '',
-    countryOfOrigin: '',
-    manufacturerName: '',
-    manufacturerCompany: '',
-    warrantyPeriod: '',
-    additionalNotes: ''
+    productName: '', brandName: '', category: '', customCategory: '', description: '',
+    batchNumber: '', serialNumber: '', manufacturingDate: '', expiryDate: '', 
+    countryOfOrigin: '', manufacturerName: '', manufacturerCompany: '', 
+    warrantyPeriod: '', additionalNotes: ''
   });
 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await templateService.getTemplates();
+      setTemplates(res.data); // Fixed nested .data from backend response
+    } catch (error) {
+      console.error("Failed to load templates", error);
+    }
+  };
+
+  const handleTemplateChange = (e) => {
+    const tempId = e.target.value;
+    setSelectedTemplate(tempId);
+    if (!tempId) {
+      resetFormData();
+      return;
+    }
+    const temp = templates.find(t => t._id === tempId);
+    if (temp) {
+      setFormData(prev => ({
+        ...prev,
+        productName: temp.productName || '',
+        brandName: temp.brandName || '',
+        category: temp.category || '',
+        description: temp.description || '',
+        countryOfOrigin: temp.countryOfOrigin || '',
+        manufacturerName: temp.manufacturerName || '',
+        manufacturerCompany: temp.manufacturerCompany || '',
+        warrantyPeriod: temp.warrantyPeriod || '',
+        additionalNotes: temp.additionalNotes || ''
+      }));
+    }
+  };
+
   const validate = () => {
+    if (mode === 'bulk') {
+      if (!parsedCsvData.length) {
+        toast.error('Please upload and parse a valid CSV file first.');
+        return false;
+      }
+      return true;
+    }
+
     const newErrors = {};
     const required = [
       'productName', 'brandName', 'category', 'description', 
-      'batchNumber', 'serialNumber', 'manufacturingDate', 
-      'countryOfOrigin', 'manufacturerName', 'manufacturerCompany'
+      'batchNumber', 'manufacturingDate', 'countryOfOrigin', 
+      'manufacturerName', 'manufacturerCompany'
     ];
-    
+    if (mode === 'single') required.push('serialNumber');
+    if (mode === 'batch' && (!quantity || parseInt(quantity) < 1 || parseInt(quantity) > 500)) {
+      newErrors.quantity = 'Quantity must be between 1 and 500';
+    }
+
     required.forEach(field => {
-      if (!formData[field] || !formData[field].trim()) {
+      if (!formData[field] || (typeof formData[field] === 'string' && !formData[field].trim())) {
         newErrors[field] = 'This field is required';
       }
     });
@@ -63,22 +114,8 @@ const ProductRegistrationPage = () => {
     if (formData.category === 'Other' && (!formData.customCategory || !formData.customCategory.trim())) {
       newErrors.customCategory = 'Please specify the category';
     }
-
-    if (formData.manufacturingDate) {
-      const mfgDate = new Date(formData.manufacturingDate);
-      if (mfgDate > new Date()) {
-        newErrors.manufacturingDate = 'Cannot be in the future';
-      }
-      if (formData.expiryDate) {
-        const expDate = new Date(formData.expiryDate);
-        if (expDate <= mfgDate) {
-          newErrors.expiryDate = 'Must be after manufacturing date';
-        }
-      }
-    }
     
     setErrors(newErrors);
-    
     if (Object.keys(newErrors).length > 0) {
       toast.error('Please fix the errors in the form before submitting.');
       return false;
@@ -92,91 +129,103 @@ const ProductRegistrationPage = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
-  const handleImageChange = (e) => {
+  const handleCsvUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Only JPG, PNG, and WebP images are allowed');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB');
-        return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setCsvFile(file);
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (results.errors.length) {
+            toast.error('Error parsing CSV. Please check format.');
+            console.error(results.errors);
+          } else {
+            setParsedCsvData(results.data);
+            toast.success(`Parsed ${results.data.length} products from CSV`);
+          }
+        }
+      });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+    setIsSubmitting(true);
 
     try {
-      setIsSubmitting(true);
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'category') {
-          if (formData.category === 'Other') {
-            submitData.append('category', formData.customCategory);
-          } else if (formData.category) {
-            submitData.append('category', formData.category);
+      if (mode === 'bulk') {
+        const res = await productService.bulkCreateProducts(parsedCsvData);
+        setBulkSuccess(true);
+        setSuccessMessage(res.message || 'Bulk upload successful');
+      } 
+      else if (mode === 'batch') {
+        const payload = { ...formData, quantity };
+        if (payload.category === 'Other') payload.category = payload.customCategory;
+        const res = await productService.createProductBatch(payload);
+        setBatchSuccess(true);
+        setSuccessMessage(res.message || 'Batch creation successful');
+      } 
+      else {
+        // Single
+        const submitData = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (key === 'category') {
+            submitData.append('category', formData.category === 'Other' ? formData.customCategory : formData.category);
+          } else if (key !== 'customCategory' && formData[key]) {
+            submitData.append(key, formData[key]);
           }
-        } else if (key !== 'customCategory' && formData[key]) {
-          submitData.append(key, formData[key]);
-        }
-      });
-      if (imageFile) {
-        submitData.append('productImage', imageFile);
+        });
+        if (imageFile) submitData.append('productImage', imageFile);
+
+        const res = await productService.createProduct(submitData);
+        setSuccessData(res.data);
       }
 
-      const res = await productService.createProduct(submitData);
-      
-      toast.success('Product registered successfully!');
-      setSuccessData(res.data);
+      // Handle Template Saving
+      if ((mode === 'single' || mode === 'batch') && saveAsTemplate && templateName) {
+        await templateService.createTemplate({
+          ...formData,
+          templateName,
+          category: formData.category === 'Other' ? formData.customCategory : formData.category
+        });
+        toast.success('Template saved successfully!');
+        fetchTemplates();
+        setSaveAsTemplate(false);
+        setTemplateName('');
+      }
+
     } catch (err) {
-      toast.error(err.message || 'Failed to register product. Serial number might be duplicate.');
+      toast.error(err.response?.data?.message || err.message || 'Operation failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCopyId = () => {
-    navigator.clipboard.writeText(successData.productId);
-    toast.success('Product ID copied to clipboard');
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head><title>Print QR Code - ${successData.productId}</title></head>
-        <body style="text-align: center; font-family: sans-serif; padding: 50px;">
-          <h2>Product ID: ${successData.productId}</h2>
-          <img src="http://localhost:5000${successData.qrImageUrl}" style="width: 300px; height: 300px; margin: 20px 0;" />
-          <p>${successData.productName} by ${successData.brandName}</p>
-          <script>window.onload = function() { window.print(); window.close(); }</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
-  const resetForm = () => {
-    setSuccessData(null);
+  const resetFormData = () => {
     setFormData({
       productName: '', brandName: '', category: '', customCategory: '', description: '',
-      batchNumber: '', serialNumber: '', manufacturingDate: '',
-      expiryDate: '', countryOfOrigin: '', manufacturerName: '',
-      manufacturerCompany: '', warrantyPeriod: '', additionalNotes: ''
+      batchNumber: '', serialNumber: '', manufacturingDate: '', expiryDate: '', 
+      countryOfOrigin: '', manufacturerName: '', manufacturerCompany: '', 
+      warrantyPeriod: '', additionalNotes: ''
     });
-    setImageFile(null);
-    setImagePreview(null);
+    setQuantity('');
     setErrors({});
   };
 
-  if (successData) {
+  const resetAll = () => {
+    setSuccessData(null);
+    setBatchSuccess(false);
+    setBulkSuccess(false);
+    setSuccessMessage('');
+    setCsvFile(null);
+    setParsedCsvData([]);
+    resetFormData();
+  };
+
+  // SUCCESS VIEWS
+  if (successData || batchSuccess || bulkSuccess) {
     return (
       <div className="h-full flex flex-col">
         <Breadcrumbs />
@@ -186,9 +235,7 @@ const ProductRegistrationPage = () => {
           className="flex-1 flex items-center justify-center py-12"
         >
           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 p-8 sm:p-12 max-w-2xl w-full text-center relative overflow-hidden">
-            {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-success/10 to-transparent pointer-events-none" />
-            
             <div className="w-24 h-24 bg-success/20 text-success rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
               <FiCheckCircle className="w-12 h-12" />
             </div>
@@ -197,63 +244,38 @@ const ProductRegistrationPage = () => {
               Registration Successful!
             </h2>
             <p className="text-slate-500 dark:text-slate-400 mb-8 relative z-10">
-              Your product has been registered and is pending blockchain verification.
+              {successMessage || 'Your product(s) have been registered.'}
             </p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10 relative z-10">
-              {/* Product ID Section */}
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-2">Unique Product ID</p>
-                <p className="text-2xl font-mono font-bold text-primary mb-4">{successData.productId}</p>
-                <button 
-                  onClick={handleCopyId}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                >
-                  <FiCopy /> Copy ID
-                </button>
-              </div>
-
-              {/* QR Code Section */}
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-3">Anti-Counterfeit QR</p>
-                <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
-                  <img 
-                    src={`http://localhost:5000${successData.qrImageUrl}`} 
-                    alt="Product QR Code"
-                    className="w-32 h-32"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <a 
-                    href={`http://localhost:5000${successData.qrImageUrl}`}
-                    download={`QR-${successData.productId}.png`}
-                    className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:text-primary transition-colors shadow-sm"
-                    title="Download PNG"
-                  >
-                    <FiDownload />
-                  </a>
+            {successData && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10 relative z-10">
+                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-2">Unique Product ID</p>
+                  <p className="text-2xl font-mono font-bold text-primary mb-4">{successData.productId}</p>
                   <button 
-                    onClick={handlePrint}
-                    className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:text-primary transition-colors shadow-sm"
-                    title="Print"
+                    onClick={() => { navigator.clipboard.writeText(successData.productId); toast.success('Copied!'); }}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
                   >
-                    <FiPrinter />
+                    <FiCopy /> Copy ID
                   </button>
                 </div>
+                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-3">Anti-Counterfeit QR</p>
+                  <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
+                    <img src={`http://localhost:5000${successData.qrImageUrl}`} className="w-32 h-32" alt="QR" />
+                  </div>
+                  <div className="flex gap-2">
+                    <a href={`http://localhost:5000${successData.qrImageUrl}`} download={`QR-${successData.productId}.png`} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm"><FiDownload /></a>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
-              <button 
-                onClick={resetForm}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
+              <button onClick={resetAll} className="w-full sm:w-auto px-6 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800">
                 Register Another
               </button>
-              <button 
-                onClick={() => navigate('/manufacturer/products')}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-secondary text-white font-bold transition-colors shadow-md shadow-primary/30 flex items-center justify-center gap-2"
-              >
+              <button onClick={() => navigate('/manufacturer/products')} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-secondary text-white font-bold flex items-center justify-center gap-2">
                 Go to Products <FiArrowRight />
               </button>
             </div>
@@ -266,209 +288,154 @@ const ProductRegistrationPage = () => {
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex items-center gap-4">
-        <button 
-          onClick={() => navigate('/manufacturer/products')}
-          className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-        >
-          <FiChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+        <button onClick={() => navigate('/manufacturer/products')} className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors">
+          <FiChevronLeft className="w-5 h-5 text-slate-600" />
         </button>
         <Breadcrumbs />
       </div>
 
       <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col">
-        <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-              <FiBox className="w-6 h-6" />
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                <FiBox className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Register Products</h2>
+                <p className="text-slate-500 text-sm">Create verifiable assets on the TrueTrace blockchain.</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Register New Product</h2>
-              <p className="text-slate-500 dark:text-slate-400">Fill in the details to generate a unique QR code and prepare for blockchain entry.</p>
+            
+            {/* Mode Switcher */}
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+              <button type="button" onClick={() => setMode('single')} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${mode === 'single' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                <FiBox /> Single
+              </button>
+              <button type="button" onClick={() => setMode('batch')} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${mode === 'batch' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                <FiList /> Batch
+              </button>
+              <button type="button" onClick={() => setMode('bulk')} className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${mode === 'bulk' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                <FiFileText /> CSV Bulk
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
-          <form id="registration-form" onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-10">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+          <form id="registration-form" onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-8">
             
-            {/* Section 1: Basic Info */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center">1</span> 
-                Basic Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Product Name <span className="text-danger">*</span></label>
-                  <input type="text" name="productName" value={formData.productName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.productName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Brand <span className="text-danger">*</span></label>
-                  <input type="text" name="brandName" value={formData.brandName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.brandName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Category <span className="text-danger">*</span></label>
-                  <select name="category" value={formData.category} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.category ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`}>
-                    <option value="">Select Category...</option>
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+            {(mode === 'single' || mode === 'batch') && (
+              <>
+                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                  <span className="text-sm font-semibold text-primary">Load Template:</span>
+                  <select value={selectedTemplate} onChange={handleTemplateChange} className="flex-1 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-white text-sm outline-none">
+                    <option value="">-- No Template (Start Fresh) --</option>
+                    {templates?.map?.(t => (
+                      <option key={t._id} value={t._id}>{t.templateName}</option>
                     ))}
                   </select>
-                  {formData.category === 'Other' && (
-                    <div className="mt-3">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Specify Category <span className="text-danger">*</span></label>
-                      <input type="text" name="customCategory" value={formData.customCategory} onChange={handleChange} placeholder="Enter your custom category" className={`w-full p-3 rounded-xl border ${errors.customCategory ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                      {errors.customCategory && <p className="text-danger text-xs mt-1">{errors.customCategory}</p>}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Description <span className="text-danger">*</span></label>
-                  <textarea name="description" rows="3" value={formData.description} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.description ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none`} />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Identifiers & Origin */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center">2</span> 
-                Identifiers & Manufacturing
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Batch Number <span className="text-danger">*</span></label>
-                  <input type="text" name="batchNumber" value={formData.batchNumber} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.batchNumber ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Serial Number <span className="text-danger">*</span></label>
-                  <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.serialNumber ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                  {errors.serialNumber && <p className="text-danger text-xs mt-1">{errors.serialNumber}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Manufacturing Date <span className="text-danger">*</span></label>
-                  <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className={`w-full p-3 rounded-xl border ${errors.manufacturingDate ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                  {errors.manufacturingDate && <p className="text-danger text-xs mt-1">{errors.manufacturingDate}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Expiry Date (Optional)</label>
-                  <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange} min={formData.manufacturingDate} className={`w-full p-3 rounded-xl border ${errors.expiryDate ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                  {errors.expiryDate && <p className="text-danger text-xs mt-1">{errors.expiryDate}</p>}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Country of Origin <span className="text-danger">*</span></label>
-                  <select name="countryOfOrigin" value={formData.countryOfOrigin} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.countryOfOrigin ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`}>
-                    <option value="">Select Country...</option>
-                    <option value="United States">United States</option>
-                    <option value="China">China</option>
-                    <option value="Japan">Japan</option>
-                    <option value="Germany">Germany</option>
-                    <option value="India">India</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Manufacturer Info & Image */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center">3</span> 
-                Manufacturer & Assets
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Manufacturer Name <span className="text-danger">*</span></label>
-                  <input type="text" name="manufacturerName" value={formData.manufacturerName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.manufacturerName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Manufacturer Company <span className="text-danger">*</span></label>
-                  <input type="text" name="manufacturerCompany" value={formData.manufacturerCompany} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.manufacturerCompany ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all`} />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Warranty Period (Optional)</label>
-                  <input type="text" name="warrantyPeriod" placeholder="e.g. 1 Year, 6 Months" value={formData.warrantyPeriod} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Additional Notes</label>
-                  <input type="text" name="additionalNotes" value={formData.additionalNotes} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Product Image (Optional, max 5MB)</label>
-                  <div className="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-2xl hover:border-primary dark:hover:border-primary transition-colors bg-white dark:bg-slate-800 relative overflow-hidden group">
-                    <div className="space-y-2 text-center relative z-10">
-                      {imagePreview ? (
-                        <div className="relative w-full max-w-sm h-48 mx-auto rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <span className="text-white font-medium flex items-center gap-2"><FiUploadCloud /> Replace Image</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                            <FiImage className="w-8 h-8" />
-                          </div>
-                          <div className="flex text-sm justify-center">
-                            <span className="relative cursor-pointer bg-transparent rounded-md font-bold text-primary hover:text-secondary focus-within:outline-none">
-                              <span>Upload a file</span>
-                            </span>
-                            <p className="pl-1 text-slate-500">or drag and drop</p>
-                          </div>
-                          <p className="text-xs text-slate-400">PNG, JPG, WebP up to 5MB</p>
-                        </>
-                      )}
-                    </div>
-                    <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onChange={handleImageChange} accept=".jpg,.jpeg,.png,.webp" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold mb-1">Product Name <span className="text-danger">*</span></label>
+                    <input type="text" name="productName" value={formData.productName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Brand <span className="text-danger">*</span></label>
+                    <input type="text" name="brandName" value={formData.brandName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Category <span className="text-danger">*</span></label>
+                    <select name="category" value={formData.category} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white">
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    {formData.category === 'Other' && (
+                      <input type="text" name="customCategory" value={formData.customCategory} onChange={handleChange} placeholder="Custom category" className="w-full mt-2 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    )}
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold mb-1">Description <span className="text-danger">*</span></label>
+                    <textarea name="description" rows="2" value={formData.description} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
                   </div>
                 </div>
-              </div>
-            </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Batch Number <span className="text-danger">*</span></label>
+                    <input type="text" name="batchNumber" value={formData.batchNumber} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white font-mono" />
+                  </div>
+                  {mode === 'single' ? (
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Serial Number <span className="text-danger">*</span></label>
+                      <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white font-mono" />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-semibold mb-1 text-primary">Quantity to Generate <span className="text-danger">*</span></label>
+                      <input type="number" min="1" max="500" name="quantity" value={quantity} onChange={e=>setQuantity(e.target.value)} placeholder="Max 500" className="w-full p-3 rounded-xl border border-primary/30 bg-primary/5 text-primary outline-none" />
+                      <p className="text-xs mt-1 text-slate-500">Serials will be auto-generated as: [Batch]-[0001...]</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Mfg Date <span className="text-danger">*</span></label>
+                    <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Country of Origin <span className="text-danger">*</span></label>
+                    <input type="text" name="countryOfOrigin" value={formData.countryOfOrigin} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Manufacturer Name <span className="text-danger">*</span></label>
+                    <input type="text" name="manufacturerName" value={formData.manufacturerName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Company <span className="text-danger">*</span></label>
+                    <input type="text" name="manufacturerCompany" value={formData.manufacturerCompany} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  
+                  <div className="md:col-span-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={saveAsTemplate} onChange={(e) => setSaveAsTemplate(e.target.checked)} className="w-4 h-4 rounded border-slate-300 text-primary" />
+                      <span className="text-sm font-medium">Save these details as a new Template</span>
+                    </label>
+                    {saveAsTemplate && (
+                      <input type="text" placeholder="Enter Template Name" value={templateName} onChange={e => setTemplateName(e.target.value)} className="w-full mt-2 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white text-sm" />
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {mode === 'bulk' && (
+              <div className="p-8 text-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-3xl">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiUploadCloud className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Upload CSV File</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">Upload a CSV containing your products. Ensure columns match: productName, brandName, category, description, batchNumber, serialNumber, manufacturingDate, countryOfOrigin, manufacturerName, manufacturerCompany.</p>
+                <input type="file" accept=".csv" onChange={handleCsvUpload} className="block w-full max-w-sm mx-auto text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+                
+                {parsedCsvData.length > 0 && (
+                  <div className="mt-6 p-4 bg-success/10 text-success rounded-xl font-medium">
+                    <FiCheckCircle className="inline mr-2" /> Ready to register {parsedCsvData.length} products
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         </div>
 
-        {/* Footer actions */}
         <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-end gap-4">
-          <button 
-            type="button" 
-            onClick={() => navigate('/manufacturer/products')}
-            disabled={isSubmitting}
-            className="px-6 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            form="registration-form"
-            disabled={isSubmitting}
-            className="px-8 py-3 rounded-xl bg-primary hover:bg-secondary text-white font-bold transition-colors shadow-lg shadow-primary/30 flex items-center gap-2 disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : (
-              <>Register & Generate QR <FiArrowRight /></>
-            )}
+          <button type="submit" form="registration-form" disabled={isSubmitting} className="px-8 py-3 rounded-xl bg-primary hover:bg-secondary text-white font-bold transition-colors flex items-center gap-2 disabled:opacity-50">
+            {isSubmitting ? 'Processing...' : (mode === 'bulk' ? `Upload ${parsedCsvData.length || ''} Products` : mode === 'batch' ? `Generate ${quantity || 'Batch'}` : 'Register Product')}
           </button>
         </div>
-
       </div>
     </div>
   );

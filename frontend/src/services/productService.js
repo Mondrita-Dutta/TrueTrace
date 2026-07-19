@@ -23,6 +23,18 @@ const productService = {
     return res.data;
   },
 
+  // Create batch products
+  createProductBatch: async (batchData) => {
+    const res = await api.post('/products/batch', batchData);
+    return res.data;
+  },
+
+  // Bulk create products from CSV
+  bulkCreateProducts: async (products) => {
+    const res = await api.post('/products/bulk/create', { products });
+    return res.data;
+  },
+
   // Update product
   updateProduct: async (id, productData) => {
     const res = await api.put(`/products/${id}`, productData, {

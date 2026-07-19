@@ -13,7 +13,14 @@ router.use(authorize('manufacturer'));
 router.post('/', upload.single('productImage'), productController.createProduct);
 router.get('/', productController.getProducts);
 
+// Template routes
+router.get('/templates', productController.getTemplates);
+router.post('/templates', productController.createTemplate);
+router.delete('/templates/:id', productController.deleteTemplate);
+
 // Bulk operations (must come before /:id)
+router.post('/batch', productController.createProductBatch);
+router.post('/bulk/create', productController.bulkCreateProducts);
 router.put('/bulk/update', productController.bulkUpdateProducts);
 
 router.get('/:id', productController.getProductById);

@@ -66,7 +66,7 @@ exports.createProduct = async (req, res) => {
     await QRCode.toFile(qrFilePath, qrDataString, {
       errorCorrectionLevel: 'H',
       width: 400,
-      margin: 2,
+      margin: 4,
       color: {
         dark: '#000000',
         light: '#ffffff'
@@ -633,7 +633,7 @@ exports.bulkCreateProducts = async (req, res) => {
       const qrFilename = `qr-${productId}.png`;
       const qrFilePath = path.join(qrDir, qrFilename);
       await QRCode.toFile(qrFilePath, qrDataString, {
-        errorCorrectionLevel: 'H', width: 400, margin: 2,
+        errorCorrectionLevel: 'H', width: 400, margin: 4,
         color: { dark: '#000000', light: '#ffffff' }
       });
       const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;

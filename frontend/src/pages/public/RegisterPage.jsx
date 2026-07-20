@@ -8,15 +8,21 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/cn';
+import { connectFreighter } from '../../utils/freighterUtils';
+import api from '../../services/api';
+import { toast } from 'react-toastify';
 
 const RegisterPage = () => {
-  const { register: registerForm, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register: registerForm, handleSubmit, watch, formState: { errors }, trigger, getValues } = useForm();
   const [role, setRole] = useState('customer'); // 'customer' or 'manufacturer'
   const [isLoading, setIsLoading] = useState(false);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [apiError, setApiError] = useState('');
-  const { register } = useAuth();
+  const { register, loginWithWallet } = useAuth();
   const navigate = useNavigate();
   const password = watch("password", "");
+
+  // handleWalletRegister removed as it's merged into onSubmit
 
   const calculateStrength = (pass) => {
     let score = 0;
@@ -34,12 +40,23 @@ const RegisterPage = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      const res = await register({ ...data, role });
+      // Step 1: Connect Wallet (1-Click)
+      const address = await connectFreighter();
+      if (!address) throw new Error("Could not retrieve wallet address");
+
+      // Step 2: Register User
+      const fullData = { ...data, role };
+      await api.post('/auth/wallet/register', { walletAddress: address, ...fullData });
+      
+      // Step 3: Verify and Login
+      const res = await loginWithWallet(address);
+      
       if (res.data.role === 'admin') navigate('/admin');
       else if (res.data.role === 'manufacturer') navigate('/manufacturer');
       else navigate('/');
     } catch (error) {
       setApiError(error.message || 'Registration failed');
+      toast.error(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
@@ -172,9 +189,10 @@ const RegisterPage = () => {
             {apiError && <p className="text-danger text-sm text-center font-medium">{apiError}</p>}
 
             <Button type="submit" className="w-full mt-6" isLoading={isLoading}>
-              Create Account
+              Create Account & Connect Wallet
             </Button>
           </form>
+
         </Card>
 
         <p className="text-center mt-8 text-slate-600 dark:text-slate-400 text-sm">

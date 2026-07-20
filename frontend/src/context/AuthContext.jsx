@@ -41,6 +41,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithWallet = async (walletAddress) => {
+    try {
+      const res = await api.post('/auth/wallet/login', { walletAddress });
+      const { token, ...userData } = res.data.data;
+      
+      localStorage.setItem('token', token);
+      setUser(userData);
+      setIsAuthenticated(true);
+      return res.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Wallet authentication failed' };
+    }
+  };
+
   const register = async (userData) => {
     try {
       const res = await api.post('/auth/register', userData);
@@ -72,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, loginWithWallet, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

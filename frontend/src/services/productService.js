@@ -7,6 +7,11 @@ const productService = {
     return res.data;
   },
 
+  getProductCategories: async () => {
+    const res = await api.get('/products/categories');
+    return res.data;
+  },
+
   // Get single product
   getProductById: async (id) => {
     const res = await api.get(`/products/${id}`);

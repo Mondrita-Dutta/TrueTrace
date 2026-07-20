@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCheckCircle, FiUploadCloud, FiImage, FiChevronLeft, FiPrinter, FiDownload, FiCopy, FiArrowRight, FiBox, FiList, FiFileText } from 'react-icons/fi';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Papa from 'papaparse';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import productService from '../../services/productService';
@@ -102,12 +103,12 @@ const ProductRegistrationPage = () => {
     ];
     if (mode === 'single') required.push('serialNumber');
     if (mode === 'batch' && (!quantity || parseInt(quantity) < 1 || parseInt(quantity) > 500)) {
-      newErrors.quantity = 'Quantity must be between 1 and 500';
+      newErrors.quantity = 'Please enter a quantity between 1 and 500';
     }
 
     required.forEach(field => {
       if (!formData[field] || (typeof formData[field] === 'string' && !formData[field].trim())) {
-        newErrors[field] = 'This field is required';
+        newErrors[field] = 'Please fill out this field';
       }
     });
 
@@ -117,7 +118,7 @@ const ProductRegistrationPage = () => {
     
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
-      toast.error('Please fix the errors in the form before submitting.');
+      toast.error('Please fill up all necessary fields.');
       return false;
     }
     return true;
@@ -228,6 +229,7 @@ const ProductRegistrationPage = () => {
   if (successData || batchSuccess || bulkSuccess) {
     return (
       <div className="h-full flex flex-col">
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="colored" />
         <Breadcrumbs />
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -287,6 +289,7 @@ const ProductRegistrationPage = () => {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="colored" />
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/manufacturer/products')} className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors">
           <FiChevronLeft className="w-5 h-5 text-slate-600" />
@@ -340,63 +343,82 @@ const ProductRegistrationPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold mb-1">Product Name <span className="text-danger">*</span></label>
-                    <input type="text" name="productName" value={formData.productName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="text" name="productName" value={formData.productName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.productName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.productName && <p className="text-danger text-xs mt-1">{errors.productName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1">Brand <span className="text-danger">*</span></label>
-                    <input type="text" name="brandName" value={formData.brandName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="text" name="brandName" value={formData.brandName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.brandName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.brandName && <p className="text-danger text-xs mt-1">{errors.brandName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1">Category <span className="text-danger">*</span></label>
-                    <select name="category" value={formData.category} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white">
+                    <select name="category" value={formData.category} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.category ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`}>
                       <option value="">Select Category...</option>
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    {errors.category && <p className="text-danger text-xs mt-1">{errors.category}</p>}
+                    
                     {formData.category === 'Other' && (
-                      <input type="text" name="customCategory" value={formData.customCategory} onChange={handleChange} placeholder="Custom category" className="w-full mt-2 p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                      <div className="mt-2">
+                        <input type="text" name="customCategory" value={formData.customCategory} onChange={handleChange} placeholder="Custom category" className={`w-full p-3 rounded-xl border ${errors.customCategory ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                        {errors.customCategory && <p className="text-danger text-xs mt-1">{errors.customCategory}</p>}
+                      </div>
                     )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold mb-1">Description <span className="text-danger">*</span></label>
-                    <textarea name="description" rows="2" value={formData.description} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <textarea name="description" rows="2" value={formData.description} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.description ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.description && <p className="text-danger text-xs mt-1">{errors.description}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                   <div>
                     <label className="block text-sm font-semibold mb-1">Batch Number <span className="text-danger">*</span></label>
-                    <input type="text" name="batchNumber" value={formData.batchNumber} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white font-mono" />
+                    <input type="text" name="batchNumber" value={formData.batchNumber} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.batchNumber ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white font-mono`} />
+                    {errors.batchNumber && <p className="text-danger text-xs mt-1">{errors.batchNumber}</p>}
                   </div>
                   {mode === 'single' ? (
                     <div>
                       <label className="block text-sm font-semibold mb-1">Serial Number <span className="text-danger">*</span></label>
-                      <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white font-mono" />
+                      <input type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.serialNumber ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white font-mono`} />
+                      {errors.serialNumber && <p className="text-danger text-xs mt-1">{errors.serialNumber}</p>}
                     </div>
                   ) : (
                     <div>
                       <label className="block text-sm font-semibold mb-1 text-primary">Quantity to Generate <span className="text-danger">*</span></label>
-                      <input type="number" min="1" max="500" name="quantity" value={quantity} onChange={e=>setQuantity(e.target.value)} placeholder="Max 500" className="w-full p-3 rounded-xl border border-primary/30 bg-primary/5 text-primary outline-none" />
-                      <p className="text-xs mt-1 text-slate-500">Serials will be auto-generated as: [Batch]-[0001...]</p>
+                      <input type="number" min="1" max="500" name="quantity" value={quantity} onChange={e=> { setQuantity(e.target.value); if(errors.quantity) setErrors({...errors, quantity: null}); }} placeholder="Max 500" className={`w-full p-3 rounded-xl border ${errors.quantity ? 'border-danger' : 'border-primary/30'} bg-primary/5 text-primary outline-none`} />
+                      {errors.quantity && <p className="text-danger text-xs mt-1">{errors.quantity}</p>}
+                      {!errors.quantity && <p className="text-xs mt-1 text-slate-500">Serials will be auto-generated as: [Batch]-[0001...]</p>}
                     </div>
                   )}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Mfg Date <span className="text-danger">*</span></label>
-                    <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className={`w-full p-3 rounded-xl border ${errors.manufacturingDate ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.manufacturingDate && <p className="text-danger text-xs mt-1">{errors.manufacturingDate}</p>}
                   </div>
                   <div>
+                    <label className="block text-sm font-semibold mb-1">Expiry Date (Optional)</label>
+                    <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange} min={formData.manufacturingDate || new Date().toISOString().split('T')[0]} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-semibold mb-1">Country of Origin <span className="text-danger">*</span></label>
-                    <input type="text" name="countryOfOrigin" value={formData.countryOfOrigin} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="text" name="countryOfOrigin" value={formData.countryOfOrigin} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.countryOfOrigin ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.countryOfOrigin && <p className="text-danger text-xs mt-1">{errors.countryOfOrigin}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
                   <div>
                     <label className="block text-sm font-semibold mb-1">Manufacturer Name <span className="text-danger">*</span></label>
-                    <input type="text" name="manufacturerName" value={formData.manufacturerName} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="text" name="manufacturerName" value={formData.manufacturerName} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.manufacturerName ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.manufacturerName && <p className="text-danger text-xs mt-1">{errors.manufacturerName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1">Company <span className="text-danger">*</span></label>
-                    <input type="text" name="manufacturerCompany" value={formData.manufacturerCompany} onChange={handleChange} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="text" name="manufacturerCompany" value={formData.manufacturerCompany} onChange={handleChange} className={`w-full p-3 rounded-xl border ${errors.manufacturerCompany ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    {errors.manufacturerCompany && <p className="text-danger text-xs mt-1">{errors.manufacturerCompany}</p>}
                   </div>
                   
                   <div className="md:col-span-2 pt-4 border-t border-slate-200 dark:border-slate-700">

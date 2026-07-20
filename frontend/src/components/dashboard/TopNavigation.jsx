@@ -9,6 +9,21 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
 
   const getInitials = () => {
     const name = user?.companyName || user?.firstName || 'User';
@@ -66,7 +81,7 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
         </button>
 
         {/* User Profile */}
-        <div className="relative">
+        <div className="relative" ref={profileMenuRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center space-x-3 p-1 pr-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -82,10 +97,6 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
           <AnimatePresence>
             {showProfileMenu && (
               <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowProfileMenu(false)}
-                />
                 <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -98,13 +109,13 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || 'admin@techcorp.com'}</p>
                   </div>
                   <div className="py-2">
-                    <Link to="/manufacturer/profile" className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <Link to="/manufacturer/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                       <FiUser className="mr-3 w-4 h-4 text-slate-400" /> My Profile
                     </Link>
-                    <Link to="/manufacturer/settings" className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <Link to="/manufacturer/settings" onClick={() => setShowProfileMenu(false)} className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                       <FiSettings className="mr-3 w-4 h-4 text-slate-400" /> Settings
                     </Link>
-                    <Link to="/manufacturer/help" className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <Link to="/manufacturer/help" onClick={() => setShowProfileMenu(false)} className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                       <FiHelpCircle className="mr-3 w-4 h-4 text-slate-400" /> Help Center
                     </Link>
                   </div>

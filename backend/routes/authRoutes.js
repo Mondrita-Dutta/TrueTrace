@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe, updateProfile } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, walletRegister, walletLogin } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -19,6 +19,8 @@ const loginValidation = [
 
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/wallet/register', walletRegister);
+router.post('/wallet/login', walletLogin);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 

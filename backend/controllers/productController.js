@@ -74,6 +74,32 @@ exports.createProduct = async (req, res) => {
     });
     const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;
 
+    // --- Blockchain Publish ---
+    let txHash = null;
+    let txLedger = null;
+    let bStatus = 'Unverified';
+    let pStatus = status || 'Pending Blockchain';
+
+    try {
+      const productPayload = {
+        productId,
+        manufacturerId: req.user.id.toString(),
+        batchNumber,
+        serialNumber,
+        timestamp: new Date().toISOString()
+      };
+      
+      const txData = await stellarService.publishProductToBlockchain(productId, productPayload);
+      txHash = txData.hash;
+      txLedger = txData.ledger;
+      bStatus = 'Verified';
+      pStatus = 'Verified';
+      console.log(`[Register] Successfully published product ${productId} to Stellar`);
+    } catch (err) {
+      console.error('[Register] Blockchain publish failed:', err);
+    }
+    // --------------------------
+
     const product = new Product({
       productId,
       productName,
@@ -90,7 +116,10 @@ exports.createProduct = async (req, res) => {
       countryOfOrigin,
       warrantyPeriod,
       additionalNotes,
-      status: status || 'Pending Blockchain',
+      status: pStatus,
+      blockchainStatus: bStatus,
+      blockchainTxHash: txHash,
+      blockchainLedger: txLedger,
       productImage: imagePath,
       qrData: qrDataString,
       qrImageUrl
@@ -332,7 +361,19 @@ exports.publishToBlockchain = async (req, res) => {
   }
 };
 
-// --- TEMPLATE ENDPOINTS ---
+// --- TEMPLATE & CATEGORY ENDPOINTS ---
+
+exports.getProductCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct('category', { manufacturerId: req.user.id });
+    // Filter out null/empty categories
+    const validCategories = categories.filter(c => c && c.trim() !== '');
+    return res.success(validCategories, 'Categories fetched successfully');
+  } catch (error) {
+    console.error('Get categories error:', error);
+    return res.error('Failed to fetch categories', 500);
+  }
+};
 
 exports.getTemplates = async (req, res) => {
   try {
@@ -394,6 +435,33 @@ exports.createProductBatch = async (req, res) => {
     const currentYear = new Date().getFullYear();
     let productCount = await Product.countDocuments();
     
+    // --- Blockchain Batch Publish ---
+    let txHash = null;
+    let txLedger = null;
+    let bStatus = 'Unverified';
+    let pStatus = status || 'Pending Blockchain';
+
+    try {
+      const batchPayload = {
+        batchNumber,
+        manufacturerId: req.user.id.toString(),
+        productName,
+        quantity: qty,
+        timestamp: new Date().toISOString()
+      };
+      
+      const txData = await stellarService.publishProductToBlockchain(`BATCH-${batchNumber}`, batchPayload);
+      txHash = txData.hash;
+      txLedger = txData.ledger;
+      bStatus = 'Verified';
+      pStatus = 'Verified';
+      console.log(`[Batch Register] Successfully published batch ${batchNumber} to Stellar`);
+    } catch (err) {
+      console.error('[Batch Register] Blockchain publish failed:', err);
+      // We continue with Pending Blockchain status if it fails
+    }
+    // --------------------------------
+
     const productsToSave = [];
     
     for (let i = 1; i <= qty; i++) {
@@ -421,7 +489,12 @@ exports.createProductBatch = async (req, res) => {
         productId, productName, category, brandName, manufacturerName, manufacturerCompany,
         manufacturerId: req.user.id, description, batchNumber, serialNumber,
         manufacturingDate, expiryDate, countryOfOrigin, warrantyPeriod, additionalNotes,
-        status: status || 'Pending Blockchain', qrData: qrDataString, qrImageUrl
+        status: pStatus, 
+        blockchainStatus: bStatus,
+        blockchainTxHash: txHash,
+        blockchainLedger: txLedger,
+        qrData: qrDataString, 
+        qrImageUrl
       }));
     }
 

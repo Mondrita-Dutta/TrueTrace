@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
 const { validationResult } = require('express-validator');
+const crypto = require('crypto');
+const StellarSdk = require('@stellar/stellar-sdk');
 
 // @desc    Register user (Customer or Manufacturer)
 // @route   POST /api/auth/register
@@ -51,6 +53,9 @@ const register = async (req, res) => {
         role: user.role,
         email: user.email,
         status: user.status,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        companyName: user.companyName,
         token: generateToken(user._id)
       }, 'Registration successful', 201);
     } else {
@@ -98,6 +103,9 @@ const login = async (req, res) => {
       role: user.role,
       email: user.email,
       status: user.status,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      companyName: user.companyName,
       token: generateToken(user._id)
     }, 'Login successful');
   } catch (error) {
@@ -174,4 +182,108 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updateProfile };
+// @desc    Register with wallet (1-Click)
+// @route   POST /api/auth/wallet/register
+// @access  Public
+const walletRegister = async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+    if (!walletAddress) {
+      return res.error('Wallet address is required', 400);
+    }
+
+    if (!StellarSdk.StrKey.isValidEd25519PublicKey(walletAddress)) {
+      return res.error('Invalid Stellar wallet address', 400);
+    }
+
+    let user = await User.findOne({ walletAddress });
+    
+    if (!user) {
+      if (req.body.email) {
+        const emailExists = await User.findOne({ email: req.body.email });
+        if (emailExists) return res.error('Email already in use', 400);
+      }
+
+      user = await User.create({
+        walletAddress,
+        role: req.body.role || 'manufacturer',
+        email: req.body.email || undefined,
+        password: req.body.password || undefined,
+        firstName: req.body.firstName || undefined,
+        lastName: req.body.lastName || undefined,
+        companyName: req.body.companyName || undefined,
+        status: 'active',
+      });
+    } else {
+      // Update existing blank profile with the new registration details
+      if (req.body.email && user.email !== req.body.email) {
+        const emailExists = await User.findOne({ email: req.body.email });
+        if (emailExists) return res.error('Email already in use', 400);
+      }
+      
+      user.role = req.body.role || user.role;
+      user.email = req.body.email || user.email;
+      user.firstName = req.body.firstName || user.firstName;
+      user.lastName = req.body.lastName || user.lastName;
+      user.companyName = req.body.companyName || user.companyName;
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+      await user.save();
+    }
+
+    res.success({
+      _id: user._id,
+      role: user.role,
+      email: user.email,
+      walletAddress: user.walletAddress,
+      status: user.status,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      companyName: user.companyName,
+      token: generateToken(user._id)
+    }, 'Wallet registration successful');
+  } catch (error) {
+    console.error(error);
+    res.error('Server error during wallet registration', 500);
+  }
+};
+
+// @desc    Login with wallet (1-Click)
+// @route   POST /api/auth/wallet/login
+// @access  Public
+const walletLogin = async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+    
+    if (!walletAddress) {
+      return res.error('Wallet address is required', 400);
+    }
+
+    const user = await User.findOne({ walletAddress });
+    if (!user) {
+      return res.error('User not found. Please register first.', 404);
+    }
+
+    if (user.status === 'rejected' || user.status === 'suspended') {
+      return res.error('Your account is restricted', 403);
+    }
+
+    res.success({
+      _id: user._id,
+      role: user.role,
+      email: user.email,
+      walletAddress: user.walletAddress,
+      status: user.status,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      companyName: user.companyName,
+      token: generateToken(user._id)
+    }, 'Wallet login successful');
+  } catch (error) {
+    console.error(error);
+    res.error('Server error during wallet login', 500);
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile, walletRegister, walletLogin };

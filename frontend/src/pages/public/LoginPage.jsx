@@ -6,13 +6,37 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { connectFreighter } from '../../utils/freighterUtils';
+import api from '../../services/api';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isLoading, setIsLoading] = useState(false);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [apiError, setApiError] = useState('');
-  const { login } = useAuth();
+  const { login, loginWithWallet } = useAuth();
   const navigate = useNavigate();
+
+  const handleWalletLogin = async () => {
+    setIsWalletLoading(true);
+    setApiError('');
+    try {
+      const address = await connectFreighter();
+      if (!address) throw new Error("Could not retrieve wallet address");
+
+      const res = await loginWithWallet(address);
+      
+      if (res.data.role === 'admin') navigate('/admin');
+      else if (res.data.role === 'manufacturer') navigate('/manufacturer');
+      else navigate('/');
+    } catch (error) {
+      setApiError(error.message || 'Failed to login with wallet');
+      toast.error(error.message || 'Wallet login failed');
+    } finally {
+      setIsWalletLoading(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -92,9 +116,16 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button variant="outline" className="w-full">Google</Button>
-            <Button variant="outline" className="w-full">GitHub</Button>
+          <div className="mt-6">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center space-x-2"
+              onClick={handleWalletLogin}
+              isLoading={isWalletLoading}
+              type="button"
+            >
+              <span>Login with Wallet</span>
+            </Button>
           </div>
         </Card>
 

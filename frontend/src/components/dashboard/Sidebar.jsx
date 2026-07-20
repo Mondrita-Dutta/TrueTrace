@@ -83,7 +83,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         transition={{ type: "spring", bounce: 0, duration: 0.4 }}
         className={clsx(
           "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen",
-          "lg:transform-none lg:opacity-100 lg:flex" // Always show on large screens
+          "lg:!transform-none lg:!opacity-100 lg:flex" // Always show on large screens
         )}
       >
         {/* Logo Section */}

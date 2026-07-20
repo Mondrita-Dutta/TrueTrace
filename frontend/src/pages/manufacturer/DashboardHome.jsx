@@ -7,10 +7,13 @@ import QuickActionButton from '../../components/dashboard/QuickActionButton';
 import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import { CardSkeleton } from '../../components/dashboard/LoadingSkeleton';
+import WalletCard from '../../components/dashboard/WalletCard';
+import SendTransactionModal from '../../components/dashboard/SendTransactionModal';
 
 const DashboardHome = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
   // Simulate data fetching
   useEffect(() => {
@@ -76,6 +79,14 @@ const DashboardHome = () => {
             ))
         }
       </div>
+      
+      {/* Wallet Card Section */}
+      <div className="w-full">
+        <WalletCard 
+          walletAddress={user?.walletAddress} 
+          onSendClick={() => setIsSendModalOpen(true)} 
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
@@ -110,6 +121,13 @@ const DashboardHome = () => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <SendTransactionModal 
+        isOpen={isSendModalOpen} 
+        onClose={() => setIsSendModalOpen(false)} 
+        walletAddress={user?.walletAddress}
+      />
     </div>
   );
 };

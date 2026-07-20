@@ -13,6 +13,9 @@ router.use(authorize('manufacturer'));
 router.post('/', upload.single('productImage'), productController.createProduct);
 router.get('/', productController.getProducts);
 
+// Categories
+router.get('/categories', productController.getProductCategories);
+
 // Template routes
 router.get('/templates', productController.getTemplates);
 router.post('/templates', productController.createTemplate);

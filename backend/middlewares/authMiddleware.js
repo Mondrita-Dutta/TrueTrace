@@ -32,4 +32,13 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.error(`User role '${req.user?.role}' is not authorized to access this route`, 403);
+    }
+    next();
+  };
+};
+
+module.exports = { protect, authorize };

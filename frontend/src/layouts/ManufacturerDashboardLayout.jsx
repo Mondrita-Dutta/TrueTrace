@@ -1,10 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/dashboard/Sidebar';
 import TopNavigation from '../components/dashboard/TopNavigation';
+import { useNotification } from '../context/NotificationContext';
+import api from '../services/api';
 
 const ManufacturerDashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { notifyInfo } = useNotification();
+  const prevScansRef = useRef(null);
+
+  useEffect(() => {
+    const pollAnalytics = async () => {
+      try {
+        const response = await api.get('/analytics');
+        if (response.data?.success) {
+          const currentScans = response.data.data.totalScans;
+          if (prevScansRef.current !== null && currentScans > prevScansRef.current) {
+            notifyInfo('🎉 A product was just verified!');
+          }
+          prevScansRef.current = currentScans;
+        }
+      } catch (error) {
+        // silently ignore polling errors
+      }
+    };
+
+    pollAnalytics(); // Initial fetch
+    const interval = setInterval(pollAnalytics, 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, [notifyInfo]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-light dark:bg-bg-dark font-primary text-slate-800 dark:text-slate-200 transition-colors duration-200">

@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const dotenv = require('dotenv');
 const path = require('path');
 const { initializeStellarAccount } = require('./services/stellarService');
+const { errorHandler } = require('./middlewares/errorMiddleware');
+const { loggerMiddleware } = require('./middlewares/loggerMiddleware');
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +22,7 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(loggerMiddleware);
 
 // Serve static files (like uploaded product images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -47,6 +50,8 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Placeholder route
 app.get('/api/health', (req, res) => {
@@ -57,12 +62,11 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.error(err.message || 'Server Error', err.status || 500);
-});
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

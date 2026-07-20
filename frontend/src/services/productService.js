@@ -30,7 +30,11 @@ const productService = {
 
   // Create batch products
   createProductBatch: async (batchData) => {
-    const res = await api.post('/products/batch', batchData);
+    const res = await api.post('/products/batch', batchData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return res.data;
   },
 
@@ -58,6 +62,11 @@ const productService = {
 
   publishToBlockchain: async (id) => {
     const res = await api.post(`/products/${id}/blockchain`);
+    return res.data;
+  },
+
+  publishBatchToBlockchain: async (ids) => {
+    const res = await api.post('/products/blockchain/batch', { ids });
     return res.data;
   },
 

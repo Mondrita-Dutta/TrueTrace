@@ -2,11 +2,12 @@
 
 @custom-variant dark (&:is(.dark *));
 @theme {
-  --color-primary: #2563EB;
-  --color-secondary: #1E40AF;
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
+  --color-primary: #2a9d8f;
+  --color-secondary: #264653;
+  --color-success: #2a9d8f;
+  --color-warning: #e9c46a;
+  --color-accent: #f4a261;
+  --color-danger: #e76f51;
   --color-bg-light: #F8FAFC;
   --color-bg-dark: #0F172A;
   --font-primary: 'Inter', sans-serif;

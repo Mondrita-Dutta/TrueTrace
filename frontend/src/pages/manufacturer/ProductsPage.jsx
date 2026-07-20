@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBox, FiSearch, FiFilter, FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiChevronLeft, FiChevronRight, FiCheckSquare, FiSquare, FiAlertCircle, FiDownload, FiCopy, FiArchive, FiList, FiLayers } from 'react-icons/fi';
+import { FiBox, FiSearch, FiFilter, FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiChevronLeft, FiChevronRight, FiCheckSquare, FiSquare, FiAlertCircle, FiDownload, FiCopy, FiArchive, FiList, FiLayers, FiLink } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,12 +8,15 @@ import 'react-toastify/dist/ReactToastify.css';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import EmptyState from '../../components/dashboard/EmptyState';
 import { TableSkeleton } from '../../components/dashboard/LoadingSkeleton';
+import ExportButtons from '../../components/ui/ExportButtons';
+import { useAuth } from '../../context/AuthContext';
 
 import productService from '../../services/productService';
 import DeleteConfirmModal from '../../components/dashboard/products/DeleteConfirmModal';
 
 const ProductsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +83,15 @@ const ProductsPage = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, categoryFilter, statusFilter, sortBy, sortOrder]);
 
+  const handleRegisterClick = () => {
+    const isProfileComplete = user?.companyName && user?.companyAddress && user?.businessRegistrationNumber && user?.licenseNumber;
+    if (!isProfileComplete) {
+      navigate('/manufacturer/profile', { state: { incompleteProfile: true } });
+    } else {
+      navigate('/manufacturer/products/new');
+    }
+  };
+
   const handleDelete = async () => {
     try {
       setIsActionLoading(true);
@@ -104,6 +116,20 @@ const ProductsPage = () => {
       fetchProducts(pagination.page);
     } catch (err) {
       toast.error(err.message || 'Failed to update products');
+    }
+  };
+
+  const handleBulkPublish = async () => {
+    try {
+      setIsActionLoading(true);
+      const res = await productService.publishBatchToBlockchain(selectedIds);
+      toast.success(res.message || 'Products published successfully');
+      setSelectedIds([]);
+      fetchProducts(pagination.page);
+    } catch (err) {
+      toast.error(err.message || 'Failed to publish products');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -139,6 +165,22 @@ const ProductsPage = () => {
     acc[batch].push(p);
     return acc;
   }, {});
+
+  const exportColumns = [
+    { label: 'Date', key: 'createdAt' },
+    { label: 'Product ID', key: 'productId' },
+    { label: 'Name', key: 'productName' },
+    { label: 'Brand', key: 'brandName' },
+    { label: 'Category', key: 'category' },
+    { label: 'Batch', key: 'batchNumber' },
+    { label: 'Serial', key: 'serialNumber' },
+    { label: 'Status', key: 'status' }
+  ];
+
+  const exportData = products.map(p => ({
+    ...p,
+    createdAt: new Date(p.createdAt).toLocaleString(),
+  }));
 
   const renderProductRow = (product, isGrouped = false) => (
     <tr key={product._id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group ${isGrouped ? 'bg-white dark:bg-slate-800' : ''}`}>
@@ -207,12 +249,22 @@ const ProductsPage = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <Breadcrumbs />
-        <button 
-          onClick={() => navigate('/manufacturer/products/new')}
-          className="bg-primary hover:bg-secondary text-white font-bold py-2.5 px-6 rounded-xl transition-colors shadow-lg shadow-primary/30 flex items-center gap-2"
-        >
-          <FiBox /> Register Product
-        </button>
+        <div className="flex items-center gap-3">
+          {products.length > 0 && (
+            <ExportButtons 
+              data={exportData}
+              filename="products_export"
+              pdfTitle="Product List"
+              columns={exportColumns}
+            />
+          )}
+          <button 
+            onClick={handleRegisterClick}
+            className="bg-primary hover:bg-secondary text-white font-bold py-2.5 px-6 rounded-xl transition-colors shadow-lg shadow-primary/30 flex items-center gap-2"
+          >
+            <FiBox /> Register Product
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col overflow-hidden">
@@ -264,6 +316,7 @@ const ProductsPage = () => {
                   className="flex items-center gap-2 bg-primary/10 dark:bg-primary/20 px-3 py-1.5 rounded-xl border border-primary/20 shrink-0"
                 >
                   <span className="text-sm font-medium text-primary mr-2">{selectedIds.length} selected</span>
+                  <button onClick={handleBulkPublish} className="text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded-lg shadow-sm text-slate-700 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1"><FiLink /> Publish</button>
                   <button onClick={() => handleBulkStatusUpdate('Archived')} className="text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded-lg shadow-sm text-slate-700 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1"><FiArchive /> Archive</button>
                   <button onClick={() => { setModalData({ isBulk: true }); setIsDeleteOpen(true); }} className="text-xs bg-red-100 dark:bg-red-900/40 px-2 py-1 rounded-lg shadow-sm text-danger hover:bg-red-200 transition-colors flex items-center gap-1"><FiTrash2 /> Delete</button>
                 </motion.div>

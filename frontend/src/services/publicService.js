@@ -7,7 +7,7 @@ const publicApi = axios.create({
 
 const publicService = {
   verifyProduct: async (productId) => {
-    const res = await publicApi.get(`/products/${productId}/verify`);
+    const res = await publicApi.get(`/verify/${productId}`);
     return res.data;
   }
 };

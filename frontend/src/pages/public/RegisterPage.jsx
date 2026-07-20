@@ -40,19 +40,13 @@ const RegisterPage = () => {
     setIsLoading(true);
     setApiError('');
     try {
-      // Step 1: Connect Wallet (1-Click)
-      const address = await connectFreighter();
-      if (!address) throw new Error("Could not retrieve wallet address");
-
-      // Step 2: Register User
+      // Step 1: Register User
       const fullData = { ...data, role };
-      await api.post('/auth/wallet/register', { walletAddress: address, ...fullData });
+      const res = await register(fullData);
       
-      // Step 3: Verify and Login
-      const res = await loginWithWallet(address);
-      
-      if (res.data.role === 'admin') navigate('/admin');
-      else if (res.data.role === 'manufacturer') navigate('/manufacturer');
+      // Step 2: Redirect based on role
+      if (res.data?.role === 'admin') navigate('/admin');
+      else if (res.data?.role === 'manufacturer') navigate('/manufacturer');
       else navigate('/');
     } catch (error) {
       setApiError(error.message || 'Registration failed');
@@ -189,7 +183,7 @@ const RegisterPage = () => {
             {apiError && <p className="text-danger text-sm text-center font-medium">{apiError}</p>}
 
             <Button type="submit" className="w-full mt-6" isLoading={isLoading}>
-              Create Account & Connect Wallet
+              Create Account
             </Button>
           </form>
 

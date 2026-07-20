@@ -12,6 +12,7 @@ import LoginPage from './pages/public/LoginPage';
 import RegisterPage from './pages/public/RegisterPage';
 import NotFoundPage from './pages/public/NotFoundPage';
 import VerificationPortal from './pages/public/VerificationPortal';
+import ScannerPage from './pages/public/ScannerPage';
 
 // Guards
 import ProtectedRoute from './components/routing/ProtectedRoute';
@@ -31,8 +32,10 @@ import ProfilePage from './pages/manufacturer/ProfilePage';
 import SettingsPage from './pages/manufacturer/SettingsPage';
 import HelpPage from './pages/manufacturer/HelpPage';
 
-// Placeholder Protected Pages
-const AdminDashboard = () => <div className="p-8"><h2 className="text-2xl font-bold mb-4">Admin Dashboard</h2><p>Placeholder for admin statistics and controls.</p></div>;
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageUsersPage from './pages/admin/ManageUsersPage';
+import SystemReportsPage from './pages/admin/SystemReportsPage';
 
 function App() {
   return (
@@ -47,6 +50,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify/:productId?" element={<VerificationPortal />} />
+          <Route path="/scan" element={<ScannerPage />} />
           {/* Catch-all */}
           <Route path="*" element={<NotFoundPage />} />
         </Route>
@@ -55,6 +59,8 @@ function App() {
         <Route element={<RoleGuard roles={['admin']} />}>
           <Route path="/admin" element={<DashboardLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<ManageUsersPage />} />
+            <Route path="reports" element={<SystemReportsPage />} />
           </Route>
         </Route>
 

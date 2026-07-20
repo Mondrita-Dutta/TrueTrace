@@ -6,9 +6,9 @@ const Sidebar = () => (
     <div className="p-4 text-2xl font-bold border-b border-blue-800">TrueTrace</div>
     <nav className="flex-1 p-4">
       <ul className="space-y-2">
-        <li><a href="/dashboard" className="block py-2 px-4 rounded hover:bg-blue-800 transition">Dashboard</a></li>
-        <li><a href="/products" className="block py-2 px-4 rounded hover:bg-blue-800 transition">Products</a></li>
-        <li><a href="/settings" className="block py-2 px-4 rounded hover:bg-blue-800 transition">Settings</a></li>
+        <li><a href="/admin" className="block py-2 px-4 rounded hover:bg-blue-800 transition">Dashboard</a></li>
+        <li><a href="/admin/users" className="block py-2 px-4 rounded hover:bg-blue-800 transition">Manage Users</a></li>
+        <li><a href="/admin/reports" className="block py-2 px-4 rounded hover:bg-blue-800 transition">System Reports</a></li>
       </ul>
     </nav>
   </aside>

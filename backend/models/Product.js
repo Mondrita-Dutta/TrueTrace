@@ -91,12 +91,23 @@ const productSchema = new mongoose.Schema({
     enum: ['Pending', 'Verified', 'Failed'],
     default: 'Pending',
   },
-  blockchainTxHash: {
+  blockchainHash: {
     type: String,
     trim: true,
   },
-  blockchainLedger: {
+  transactionHash: {
+    type: String,
+    trim: true,
+  },
+  ledgerNumber: {
     type: Number,
+  },
+  network: {
+    type: String,
+    default: 'Stellar Testnet',
+  },
+  blockchainTimestamp: {
+    type: Date,
   },
   status: {
     type: String,

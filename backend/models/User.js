@@ -67,6 +67,9 @@ const userSchema = new mongoose.Schema({
   businessRegistrationNumber: {
     type: String
   },
+  licenseNumber: {
+    type: String
+  },
   website: {
     type: String
   },

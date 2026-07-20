@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import { motion } from 'framer-motion';
-import { FiBox, FiCheckCircle, FiMaximize, FiBarChart2, FiAlertTriangle, FiPlus } from 'react-icons/fi';
+import { FiBox, FiCheckCircle, FiMaximize, FiBarChart2, FiAlertTriangle, FiPlus, FiClock, FiShield } from 'react-icons/fi';
 import StatCard from '../../components/dashboard/StatCard';
 import QuickActionButton from '../../components/dashboard/QuickActionButton';
 import ActivityTimeline from '../../components/dashboard/ActivityTimeline';
@@ -12,26 +14,54 @@ import SendTransactionModal from '../../components/dashboard/SendTransactionModa
 
 const DashboardHome = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
-  // Simulate data fetching
+  const [dashboardData, setDashboardData] = useState({
+    totalProducts: 0,
+    verifiedProducts: 0,
+    pendingRegistration: 0,
+    totalScans: 0,
+    counterfeitReports: 0
+  });
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const fetchDashboardData = async () => {
+      try {
+        const res = await api.get('/analytics');
+        if (res.data.success) {
+          setDashboardData(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
   }, []);
 
   const stats = [
-    { title: 'Total Products', value: '1,248', icon: FiBox, trend: 'up', trendValue: '+12%' },
-    { title: 'Verified Products', value: '1,102', icon: FiCheckCircle, trend: 'up', trendValue: '+18%' },
-    { title: 'Total Scans', value: '45.2k', icon: FiBarChart2, trend: 'up', trendValue: '+24%' },
-    { title: 'Counterfeit Reports', value: '12', icon: FiAlertTriangle, trend: 'down', trendValue: '-5%' },
+    { title: 'Total Products', value: dashboardData.totalProducts.toLocaleString(), icon: FiBox, trend: 'up', trendValue: '+12%' },
+    { title: 'Blockchain Registered', value: dashboardData.verifiedProducts.toLocaleString(), icon: FiCheckCircle, trend: 'up', trendValue: '+18%' },
+    { title: 'Pending Registration', value: dashboardData.pendingRegistration.toLocaleString(), icon: FiAlertTriangle, trend: 'down', trendValue: '-5%' },
+    { title: 'Total Scans', value: dashboardData.totalScans.toLocaleString(), icon: FiBarChart2, trend: 'up', trendValue: '+24%' },
+    { title: 'Fake Reports', value: dashboardData.counterfeitReports.toLocaleString(), icon: FiAlertTriangle, trend: 'down', trendValue: '-5%' },
   ];
 
+  const handleRegisterProductClick = (e) => {
+    e.preventDefault();
+    const isProfileComplete = user?.companyName && user?.companyAddress && user?.businessRegistrationNumber && user?.licenseNumber;
+    if (!isProfileComplete) {
+      navigate('/manufacturer/profile', { state: { incompleteProfile: true } });
+    } else {
+      navigate('/manufacturer/products/new');
+    }
+  };
+
   const quickActions = [
-    { title: 'Register Product', description: 'Add a new product to TrueTrace', icon: FiPlus, to: '/manufacturer/products', variant: 'primary' },
+    { title: 'Register Product', description: 'Add a new product to TrueTrace', icon: FiPlus, onClick: handleRegisterProductClick, variant: 'primary' },
     { title: 'Generate QR', description: 'Create verifiable QR codes', icon: FiMaximize, to: '/manufacturer/generate-qr', variant: 'secondary' },
     { title: 'View Analytics', description: 'Check scan locations & stats', icon: FiBarChart2, to: '/manufacturer/analytics', variant: 'secondary' },
   ];
@@ -71,9 +101,9 @@ const DashboardHome = () => {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {loading 
-          ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+          ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           : stats.map((stat, index) => (
               <StatCard key={index} {...stat} delay={index * 0.1} />
             ))

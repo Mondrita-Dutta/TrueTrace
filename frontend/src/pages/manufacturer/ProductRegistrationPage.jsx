@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCheckCircle, FiUploadCloud, FiImage, FiChevronLeft, FiPrinter, FiDownload, FiCopy, FiArrowRight, FiBox, FiList, FiFileText } from 'react-icons/fi';
 import { toast, ToastContainer } from 'react-toastify';
@@ -17,6 +18,7 @@ const categories = [
 
 const ProductRegistrationPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mode, setMode] = useState('single'); // 'single', 'batch', 'bulk'
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,17 @@ const ProductRegistrationPage = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // Check if manufacturer profile is complete
+    if (user && user.role === 'manufacturer') {
+      const isProfileComplete = user.companyName && user.companyAddress && user.businessRegistrationNumber && user.licenseNumber;
+      if (!isProfileComplete) {
+        toast.warning('Please complete your profile before registering a product.');
+        navigate('/manufacturer/profile', { state: { incompleteProfile: true } });
+      }
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     fetchTemplates();
@@ -162,9 +175,18 @@ const ProductRegistrationPage = () => {
         setSuccessMessage(res.message || 'Bulk upload successful');
       } 
       else if (mode === 'batch') {
-        const payload = { ...formData, quantity };
-        if (payload.category === 'Other') payload.category = payload.customCategory;
-        const res = await productService.createProductBatch(payload);
+        const submitData = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (key === 'category') {
+            submitData.append('category', formData.category === 'Other' ? formData.customCategory : formData.category);
+          } else if (key !== 'customCategory' && formData[key]) {
+            submitData.append(key, formData[key]);
+          }
+        });
+        submitData.append('quantity', quantity);
+        if (imageFile) submitData.append('productImage', imageFile);
+
+        const res = await productService.createProductBatch(submitData);
         setBatchSuccess(true);
         setSuccessMessage(res.message || 'Batch creation successful');
       } 
@@ -429,6 +451,65 @@ const ProductRegistrationPage = () => {
                     {saveAsTemplate && (
                       <input type="text" placeholder="Enter Template Name" value={templateName} onChange={e => setTemplateName(e.target.value)} className="w-full mt-2 p-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white text-sm" />
                     )}
+                  </div>
+                </div>
+                
+                {/* Image Upload Section */}
+                <div className="grid grid-cols-1 gap-6 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Product Image (Optional)</label>
+                    <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-xl hover:border-primary transition-colors cursor-pointer"
+                         onClick={() => document.getElementById('image-upload').click()}
+                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                         onDrop={(e) => {
+                           e.preventDefault();
+                           e.stopPropagation();
+                           const file = e.dataTransfer.files[0];
+                           if (file && file.type.startsWith('image/')) {
+                             setImageFile(file);
+                             const reader = new FileReader();
+                             reader.onloadend = () => setImagePreview(reader.result);
+                             reader.readAsDataURL(file);
+                           } else {
+                             toast.error('Please upload a valid image file');
+                           }
+                         }}>
+                      <div className="space-y-1 text-center">
+                        {imagePreview ? (
+                          <div className="flex flex-col items-center">
+                            <img src={imagePreview} alt="Preview" className="h-32 object-contain mb-2 rounded-lg" />
+                            <p className="text-sm text-primary font-medium">Click to change image</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <FiImage className="mx-auto h-12 w-12 text-slate-400" />
+                            <div className="flex text-sm text-slate-600 dark:text-slate-400 mt-4">
+                              <span className="relative rounded-md font-medium text-primary hover:text-secondary focus-within:outline-none">
+                                <span>Upload a file</span>
+                              </span>
+                              <p className="pl-1">or drag and drop</p>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">PNG, JPG, GIF up to 5MB</p>
+                          </div>
+                        )}
+                      </div>
+                      <input 
+                        id="image-upload" 
+                        name="image-upload" 
+                        type="file" 
+                        accept="image/*"
+                        className="sr-only" 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setImageFile(file);
+                            const reader = new FileReader();
+                            reader.onloadend = () => setImagePreview(reader.result);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </>

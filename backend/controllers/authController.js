@@ -131,6 +131,7 @@ const getMe = async (req, res) => {
       phone: req.user.phone,
       companyAddress: req.user.companyAddress,
       businessRegistrationNumber: req.user.businessRegistrationNumber,
+      licenseNumber: req.user.licenseNumber,
       country: req.user.country,
       website: req.user.website
     });
@@ -154,6 +155,7 @@ const updateProfile = async (req, res) => {
       user.phone = req.body.phone || user.phone;
       user.companyAddress = req.body.companyAddress || user.companyAddress;
       user.businessRegistrationNumber = req.body.businessRegistrationNumber || user.businessRegistrationNumber;
+      user.licenseNumber = req.body.licenseNumber || user.licenseNumber;
       user.country = req.body.country || user.country;
       user.website = req.body.website || user.website;
 
@@ -170,6 +172,7 @@ const updateProfile = async (req, res) => {
         phone: updatedUser.phone,
         companyAddress: updatedUser.companyAddress,
         businessRegistrationNumber: updatedUser.businessRegistrationNumber,
+        licenseNumber: updatedUser.licenseNumber,
         country: updatedUser.country,
         website: updatedUser.website
       }, 'Profile updated successfully');

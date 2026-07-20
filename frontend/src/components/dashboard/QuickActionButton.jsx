@@ -3,11 +3,14 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 
-const QuickActionButton = ({ icon: Icon, title, description, to, delay = 0, variant = "primary" }) => {
+const QuickActionButton = ({ icon: Icon, title, description, to, onClick, delay = 0, variant = "primary" }) => {
   const isPrimary = variant === 'primary';
 
+  const Component = onClick ? 'button' : Link;
+  const props = onClick ? { onClick, type: "button", className: "block w-full text-left" } : { to, className: "block w-full" };
+
   return (
-    <Link to={to} className="block w-full">
+    <Component {...props}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -36,7 +39,7 @@ const QuickActionButton = ({ icon: Icon, title, description, to, delay = 0, vari
           </p>
         </div>
       </motion.div>
-    </Link>
+    </Component>
   );
 };
 

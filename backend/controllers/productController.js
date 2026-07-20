@@ -77,24 +77,31 @@ exports.createProduct = async (req, res) => {
     // --- Blockchain Publish ---
     let txHash = null;
     let txLedger = null;
-    let bStatus = 'Unverified';
+    let bHash = null;
+    let bTimestamp = null;
+    let bStatus = 'Pending';
     let pStatus = status || 'Pending Blockchain';
 
     try {
       const productPayload = {
-        productId,
-        manufacturerId: req.user.id.toString(),
-        batchNumber,
+        manufacturerName: manufacturerCompany || manufacturerName,
+        brandName,
+        productName,
         serialNumber,
+        batchNumber,
+        manufacturingDate,
+        expiryDate: expiryDate || '',
         timestamp: new Date().toISOString()
       };
       
       const txData = await stellarService.publishProductToBlockchain(productId, productPayload);
       txHash = txData.hash;
       txLedger = txData.ledger;
+      bHash = txData.localHash;
+      bTimestamp = productPayload.timestamp;
       bStatus = 'Verified';
       pStatus = 'Verified';
-      console.log(`[Register] Successfully published product ${productId} to Stellar`);
+      console.log(`[Register] Successfully published product ${productId} to Stellar at ${txData.timestamp}`);
     } catch (err) {
       console.error('[Register] Blockchain publish failed:', err);
     }
@@ -118,8 +125,11 @@ exports.createProduct = async (req, res) => {
       additionalNotes,
       status: pStatus,
       blockchainStatus: bStatus,
-      blockchainTxHash: txHash,
-      blockchainLedger: txLedger,
+      transactionHash: txHash,
+      ledgerNumber: txLedger,
+      blockchainHash: bHash,
+      network: 'Stellar Testnet',
+      blockchainTimestamp: bTimestamp,
       productImage: imagePath,
       qrData: qrDataString,
       qrImageUrl
@@ -324,6 +334,7 @@ exports.bulkUpdateProducts = async (req, res) => {
 // @route   POST /api/products/:id/blockchain
 // @access  Private (Manufacturer)
 exports.publishToBlockchain = async (req, res) => {
+  console.log(`[DEBUG] publishToBlockchain called for ID: ${req.params.id}`);
   try {
     const product = await Product.findOne({ _id: req.params.id, manufacturerId: req.user.id });
     
@@ -337,10 +348,14 @@ exports.publishToBlockchain = async (req, res) => {
 
     // Prepare core data for hash payload
     const productDataPayload = {
-      productId: product.productId,
-      manufacturerId: product.manufacturerId.toString(),
+      manufacturerName: product.manufacturerCompany || product.manufacturerName,
+      brandName: product.brandName,
+      productName: product.productName,
+      serialNumber: product.serialNumber,
       batchNumber: product.batchNumber,
-      serialNumber: product.serialNumber
+      manufacturingDate: product.manufacturingDate,
+      expiryDate: product.expiryDate || '',
+      timestamp: new Date().toISOString()
     };
 
     // Publish to Stellar
@@ -348,8 +363,11 @@ exports.publishToBlockchain = async (req, res) => {
 
     // Update Product Record
     product.blockchainStatus = 'Verified';
-    product.blockchainTxHash = txData.hash;
-    product.blockchainLedger = txData.ledger;
+    product.transactionHash = txData.hash;
+    product.ledgerNumber = txData.ledger;
+    product.blockchainHash = txData.localHash;
+    product.network = 'Stellar Testnet';
+    product.blockchainTimestamp = productDataPayload.timestamp;
     product.status = 'Verified';
     
     const updatedProduct = await product.save();
@@ -358,6 +376,76 @@ exports.publishToBlockchain = async (req, res) => {
   } catch (error) {
     console.error('Publish to blockchain error:', error);
     return res.error(error.message || 'Failed to publish to blockchain', 500);
+  }
+};
+
+
+// @desc    Publish a batch of products to Stellar Blockchain
+// @route   POST /api/products/blockchain/batch
+// @access  Private (Manufacturer)
+exports.publishBatchToBlockchain = async (req, res) => {
+  console.log(`[DEBUG] publishBatchToBlockchain called with body:`, req.body);
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.error('No product IDs provided', 400);
+    }
+
+    const products = await Product.find({ 
+      _id: { $in: ids }, 
+      manufacturerId: req.user.id,
+      blockchainStatus: { $ne: 'Verified' } 
+    });
+
+    if (products.length === 0) {
+      return res.error('No eligible products found to publish', 404);
+    }
+
+    const publishedProducts = [];
+    const errors = [];
+
+    // Process synchronously in a loop
+    for (const product of products) {
+      try {
+        const productDataPayload = {
+          manufacturerName: product.manufacturerCompany || product.manufacturerName,
+          brandName: product.brandName,
+          productName: product.productName,
+          serialNumber: product.serialNumber,
+          batchNumber: product.batchNumber,
+          manufacturingDate: product.manufacturingDate,
+          expiryDate: product.expiryDate || '',
+          timestamp: new Date().toISOString()
+        };
+
+        const txData = await stellarService.publishProductToBlockchain(product.productId, productDataPayload);
+
+        product.blockchainStatus = 'Verified';
+        product.transactionHash = txData.hash;
+        product.ledgerNumber = txData.ledger;
+        product.blockchainHash = txData.localHash;
+        product.network = 'Stellar Testnet';
+        product.blockchainTimestamp = productDataPayload.timestamp;
+        product.status = 'Verified';
+
+        await product.save();
+        publishedProducts.push(product._id);
+      } catch (err) {
+        errors.push({ id: product._id, error: err.message });
+      }
+    }
+
+    if (publishedProducts.length === 0) {
+      return res.error('Failed to publish any products', 500, { errors });
+    }
+
+    return res.success(
+      { publishedCount: publishedProducts.length, errors },
+      `Successfully published ${publishedProducts.length} product(s) to blockchain`
+    );
+  } catch (error) {
+    console.error('Batch publish error:', error);
+    return res.error(error.message || 'Failed to process batch publish', 500);
   }
 };
 
@@ -435,17 +523,27 @@ exports.createProductBatch = async (req, res) => {
     const currentYear = new Date().getFullYear();
     let productCount = await Product.countDocuments();
     
+    let imagePath = '';
+    if (req.file) {
+      imagePath = `/uploads/products/${req.file.filename}`;
+    }
+    
     // --- Blockchain Batch Publish ---
     let txHash = null;
     let txLedger = null;
-    let bStatus = 'Unverified';
+    let bHash = null;
+    let bTimestamp = null;
+    let bStatus = 'Pending';
     let pStatus = status || 'Pending Blockchain';
 
     try {
       const batchPayload = {
-        batchNumber,
-        manufacturerId: req.user.id.toString(),
+        manufacturerName: manufacturerCompany || manufacturerName,
+        brandName,
         productName,
+        batchNumber,
+        manufacturingDate,
+        expiryDate: expiryDate || '',
         quantity: qty,
         timestamp: new Date().toISOString()
       };
@@ -453,9 +551,11 @@ exports.createProductBatch = async (req, res) => {
       const txData = await stellarService.publishProductToBlockchain(`BATCH-${batchNumber}`, batchPayload);
       txHash = txData.hash;
       txLedger = txData.ledger;
+      bHash = txData.localHash;
+      bTimestamp = batchPayload.timestamp;
       bStatus = 'Verified';
       pStatus = 'Verified';
-      console.log(`[Batch Register] Successfully published batch ${batchNumber} to Stellar`);
+      console.log(`[Batch Register] Successfully published batch ${batchNumber} to Stellar at ${txData.timestamp}`);
     } catch (err) {
       console.error('[Batch Register] Blockchain publish failed:', err);
       // We continue with Pending Blockchain status if it fails
@@ -491,8 +591,12 @@ exports.createProductBatch = async (req, res) => {
         manufacturingDate, expiryDate, countryOfOrigin, warrantyPeriod, additionalNotes,
         status: pStatus, 
         blockchainStatus: bStatus,
-        blockchainTxHash: txHash,
-        blockchainLedger: txLedger,
+        transactionHash: txHash,
+        ledgerNumber: txLedger,
+        blockchainHash: bHash,
+        network: 'Stellar Testnet',
+        blockchainTimestamp: bTimestamp,
+        productImage: imagePath,
         qrData: qrDataString, 
         qrImageUrl
       }));

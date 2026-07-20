@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash } from 'react-icons/fi';
+import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash, FiAlertTriangle } from 'react-icons/fi';
 import publicService from '../../services/publicService';
+import Button from '../../components/ui/Button';
+import ReportCounterfeitModal from '../../components/ui/ReportCounterfeitModal';
 
 const VerificationPortal = () => {
   const { productId: initialId } = useParams();
@@ -12,6 +14,7 @@ const VerificationPortal = () => {
   const [result, setResult] = useState(null); // The API response data
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialId) {
@@ -109,7 +112,7 @@ const VerificationPortal = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
             
             {/* Status Header */}
-            <div className={`p-8 text-center ${result.data.isAuthentic ? 'bg-gradient-to-b from-success/20 to-transparent' : 'bg-gradient-to-b from-yellow-500/20 to-transparent'}`}>
+            <div className={`p-8 text-center ${result.data.isAuthentic ? 'bg-gradient-to-b from-success/20 to-transparent' : (!result.data.blockchain ? 'bg-gradient-to-b from-yellow-500/20 to-transparent' : 'bg-gradient-to-b from-danger/20 to-transparent')}`}>
               {result.data.isAuthentic ? (
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-success/20 text-success rounded-full flex items-center justify-center mb-4">
@@ -118,13 +121,24 @@ const VerificationPortal = () => {
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Verified Authentic</h2>
                   <p className="text-slate-600 dark:text-slate-300">{result.message}</p>
                 </div>
-              ) : (
+              ) : !result.data.blockchain ? (
                 <div className="flex flex-col items-center">
                   <div className="w-20 h-20 bg-yellow-500/20 text-yellow-600 rounded-full flex items-center justify-center mb-4">
                     <FiShield className="w-10 h-10" />
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Pending Blockchain</h2>
                   <p className="text-slate-600 dark:text-slate-300">{result.message}</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 bg-danger/20 text-danger rounded-full flex items-center justify-center mb-4">
+                    <FiXCircle className="w-10 h-10" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-danger mb-2">Fake Product Detected</h2>
+                  <p className="text-slate-600 dark:text-slate-300 mb-4">{result.message}</p>
+                  <Button variant="danger" onClick={() => setIsReportModalOpen(true)}>
+                    <FiAlertTriangle className="mr-2 inline" /> Report Suspicious Product
+                  </Button>
                 </div>
               )}
             </div>
@@ -206,8 +220,17 @@ const VerificationPortal = () => {
                     <div className="bg-white/10 rounded-xl p-4 mt-2 backdrop-blur-sm border border-white/10">
                       <p className="text-xs text-slate-300 mb-2">Hash Verification Match:</p>
                       <p className="font-mono text-[10px] text-slate-400 break-all"><span className="text-primary">Local:</span> {result.data.blockchain.localHash}</p>
-                      <p className="font-mono text-[10px] text-slate-400 break-all"><span className="text-success">Chain:</span> {result.data.blockchain.stellarHash}</p>
+                      <p className="font-mono text-[10px] text-slate-400 break-all"><span className={result.data.isAuthentic ? 'text-success' : 'text-danger'}>Chain:</span> {result.data.blockchain.stellarHash}</p>
                     </div>
+                    
+                    <a 
+                      href={`https://stellar.expert/explorer/testnet/tx/${result.data.blockchain.txHash}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="mt-4 block w-full text-center bg-white/10 hover:bg-white/20 text-white font-medium py-2 rounded-xl border border-white/20 transition-colors"
+                    >
+                      View on Stellar Expert
+                    </a>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-40 text-slate-400 space-y-3 relative z-10">
@@ -216,12 +239,62 @@ const VerificationPortal = () => {
                   </div>
                 )}
               </div>
-
             </div>
+
+            {/* Blockchain Timeline */}
+            <div className="p-8 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-sm flex items-center gap-2 mb-6">
+                <FiClock className="text-primary" /> Lifecycle Timeline
+              </h4>
+              <div className="relative">
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
+                <div className="space-y-6">
+                  {/* Step 1: Registered */}
+                  <div className="relative pl-10">
+                    <div className="absolute left-2 top-1.5 w-4 h-4 bg-primary rounded-full border-4 border-slate-50 dark:border-slate-900"></div>
+                    <p className="font-bold text-slate-900 dark:text-white">Product Registered</p>
+                    <p className="text-xs text-slate-500 mt-1">{new Date(result.data.product.createdAt).toLocaleString()}</p>
+                  </div>
+                  {/* Step 2: Blockchain Stored */}
+                  <div className="relative pl-10">
+                    <div className={`absolute left-2 top-1.5 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-900 ${result.data.blockchain ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                    <p className={`font-bold ${result.data.blockchain ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>Blockchain Stored</p>
+                    {result.data.blockchain && (
+                      <p className="text-xs text-slate-500 mt-1">{new Date(result.data.blockchain.timestamp).toLocaleString()}</p>
+                    )}
+                  </div>
+                  {/* Step 3: QR Generated */}
+                  <div className="relative pl-10">
+                    <div className={`absolute left-2 top-1.5 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-900 ${result.data.product.qrImageUrl ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                    <p className={`font-bold ${result.data.product.qrImageUrl ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>QR Code Generated</p>
+                    {result.data.product.qrImageUrl && (
+                      <p className="text-xs text-slate-500 mt-1">{new Date(result.data.product.createdAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                  {/* Step 4: Verified */}
+                  <div className="relative pl-10">
+                    <div className={`absolute left-2 top-1.5 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-900 ${result.data.isAuthentic ? 'bg-success' : (result.data.blockchain ? 'bg-danger' : 'bg-slate-300 dark:bg-slate-700')}`}></div>
+                    <p className={`font-bold ${result.data.isAuthentic ? 'text-success' : (result.data.blockchain ? 'text-danger' : 'text-slate-400')}`}>
+                      {result.data.isAuthentic ? 'Product Verified Authentic' : (result.data.blockchain ? 'Verification Failed (Tampered)' : 'Pending Verification')}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Current Scan: {new Date().toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </motion.div>
         )}
       </div>
 
+      {result?.data?.product && (
+        <ReportCounterfeitModal 
+          isOpen={isReportModalOpen} 
+          onClose={() => setIsReportModalOpen(false)} 
+          productId={result.data.product.productId}
+          productName={result.data.product.productName}
+        />
+      )}
     </div>
   );
 };

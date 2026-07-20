@@ -294,7 +294,7 @@ const ProductDetailsPage = () => {
               )}
 
               {/* Blockchain Record Details */}
-              {product.blockchainTxHash && (
+              {product.transactionHash && (
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-700">
                   <h4 className="text-sm font-bold text-success uppercase tracking-wider flex items-center gap-2 mb-4">
                     <FiShield /> Immutable Blockchain Record
@@ -303,18 +303,18 @@ const ProductDetailsPage = () => {
                     <div>
                       <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Transaction Hash</p>
                       <a 
-                        href={`https://stellar.expert/explorer/testnet/tx/${product.blockchainTxHash}`}
+                        href={`https://stellar.expert/explorer/testnet/tx/${product.transactionHash}`}
                         target="_blank"
                         rel="noreferrer"
                         className="font-mono text-sm text-primary hover:underline break-all"
                       >
-                        {product.blockchainTxHash}
+                        {product.transactionHash}
                       </a>
                     </div>
-                    {product.blockchainLedger && (
+                    {product.ledgerNumber && (
                       <div>
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Ledger Sequence</p>
-                        <p className="font-mono text-sm text-slate-700 dark:text-slate-300">{product.blockchainLedger}</p>
+                        <p className="font-mono text-sm text-slate-700 dark:text-slate-300">{product.ledgerNumber}</p>
                       </div>
                     )}
                   </div>

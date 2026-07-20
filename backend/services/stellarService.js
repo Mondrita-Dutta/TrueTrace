@@ -65,7 +65,7 @@ const publishProductToBlockchain = async (productId, productData) => {
       amount: "0.0000001" // Minimum valid amount
     }))
     .addMemo(StellarSdk.Memo.hash(hash.toString('hex')))
-    .setTimeout(30)
+    .setTimeout(0) // 0 means infinite timeout, ignoring local system clock differences
     .build();
 
     // 4. Sign and submit
@@ -79,7 +79,9 @@ const publishProductToBlockchain = async (productId, productData) => {
     return {
       hash: transactionResult.hash,
       ledger: transactionResult.ledger,
-      stellarUrl: `https://stellar.expert/explorer/testnet/tx/${transactionResult.hash}`
+      stellarUrl: `https://stellar.expert/explorer/testnet/tx/${transactionResult.hash}`,
+      timestamp: new Date().toISOString(),
+      localHash: hash.toString('hex')
     };
   } catch (error) {
     console.error('[Stellar] Publish error:', error.response ? error.response.data : error);
@@ -87,7 +89,56 @@ const publishProductToBlockchain = async (productId, productData) => {
   }
 };
 
+const registerProduct = publishProductToBlockchain;
+
+/**
+ * Gets transaction details from Stellar Horizon.
+ */
+const getTransaction = async (txHash) => {
+  try {
+    const response = await server.transactions().transaction(txHash).call();
+    return response;
+  } catch (error) {
+    console.error(`[Stellar] Error fetching transaction ${txHash}:`, error);
+    throw new Error('Failed to fetch transaction from Stellar');
+  }
+};
+
+/**
+ * Gets ledger details from Stellar Horizon.
+ */
+const getLedger = async (ledgerSequence) => {
+  try {
+    const response = await server.ledgers().ledger(ledgerSequence).call();
+    return response;
+  } catch (error) {
+    console.error(`[Stellar] Error fetching ledger ${ledgerSequence}:`, error);
+    throw new Error('Failed to fetch ledger from Stellar');
+  }
+};
+
+/**
+ * Verifies a transaction by comparing its hash/memo to the expected local hash.
+ */
+const verifyTransaction = async (txHash, expectedHashHex) => {
+  try {
+    const tx = await getTransaction(txHash);
+    let memoHex = '';
+    if (tx.memo) {
+      memoHex = Buffer.from(tx.memo, 'base64').toString('hex');
+    }
+    return memoHex === expectedHashHex;
+  } catch (error) {
+    console.error(`[Stellar] Verify error for tx ${txHash}:`, error);
+    return false;
+  }
+};
+
 module.exports = {
   initializeStellarAccount,
-  publishProductToBlockchain
+  publishProductToBlockchain,
+  registerProduct,
+  verifyTransaction,
+  getTransaction,
+  getLedger
 };

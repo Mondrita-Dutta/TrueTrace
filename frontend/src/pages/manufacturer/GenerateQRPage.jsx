@@ -140,26 +140,27 @@ const GenerateQRPage = () => {
       </div>
 
       {/* Printable Area - Only visible during print */}
-      <div className="hidden print:block print:w-full">
+      <div className="hidden print:block print:w-full bg-white print:bg-white absolute top-0 left-0 w-full min-h-screen z-50">
         <style>
           {`
             @media print {
               @page { margin: 0.5in; }
-              body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
               /* Hide layout elements that might not be caught by print:hidden */
               aside, header, nav, .sidebar { display: none !important; }
               /* Ensure the printable area takes full width */
               .print\\:w-full { width: 100% !important; }
+              * { box-shadow: none !important; text-shadow: none !important; }
             }
           `}
         </style>
-        <div className="grid grid-cols-4 gap-4 w-full">
+        <div className="grid grid-cols-4 gap-4 w-full bg-white print:bg-white">
           {batchProducts.map(p => (
-            <div key={p._id} className="border border-black p-2 flex flex-col items-center text-center" style={{ breakInside: 'avoid' }}>
-              <img src={`http://localhost:5000${p.qrImageUrl}`} alt="QR Code" className="w-32 h-32 mb-1" />
+            <div key={p._id} className="border border-black p-2 flex flex-col items-center text-center bg-white print:bg-white" style={{ breakInside: 'avoid' }}>
+              <img src={`http://localhost:5000${p.qrImageUrl}`} alt="QR Code" className="w-32 h-32 mb-1 bg-white" />
               <p className="text-sm font-bold text-black m-0 leading-tight">{p.productName}</p>
-              <p className="text-xs text-gray-700 m-0 leading-tight">Batch: {p.batchNumber}</p>
-              <p className="text-xs text-gray-700 font-mono m-0 leading-tight">{p.serialNumber}</p>
+              <p className="text-xs text-black m-0 leading-tight">Batch: {p.batchNumber}</p>
+              <p className="text-xs text-black font-mono m-0 leading-tight">{p.serialNumber}</p>
             </div>
           ))}
         </div>

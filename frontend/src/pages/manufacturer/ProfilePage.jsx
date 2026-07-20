@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FiCheckCircle, FiEdit2, FiMail, FiPhone, FiMapPin, FiBriefcase, FiCalendar, FiSave, FiX } from 'react-icons/fi';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import { toast } from 'react-toastify';
 
 const ProfilePage = () => {
+  const location = useLocation();
   const { user, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  
+  const [isEditing, setIsEditing] = useState(
+    location.state?.incompleteProfile ? true : false
+  );
   const [formData, setFormData] = useState({
     companyName: user?.companyName || user?.firstName || '',
     phone: user?.phone || '',
     companyAddress: user?.companyAddress || '',
-    businessRegistrationNumber: user?.businessRegistrationNumber || ''
+    businessRegistrationNumber: user?.businessRegistrationNumber || '',
+    licenseNumber: user?.licenseNumber || ''
   });
   const [isLoading, setIsLoading] = useState(false);
   
@@ -47,7 +53,8 @@ const ProfilePage = () => {
       companyName: user?.companyName || user?.firstName || '',
       phone: user?.phone || '',
       companyAddress: user?.companyAddress || '',
-      businessRegistrationNumber: user?.businessRegistrationNumber || ''
+      businessRegistrationNumber: user?.businessRegistrationNumber || '',
+      licenseNumber: user?.licenseNumber || ''
     });
     setIsEditing(false);
   };
@@ -55,6 +62,21 @@ const ProfilePage = () => {
   return (
     <div className="space-y-6">
       <Breadcrumbs />
+
+      {location.state?.incompleteProfile && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <FiCheckCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-200 font-medium">
+                Please complete your profile first. You must fill out your Company Address, Registration Number, and License Number before you can register products.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-10 border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -141,6 +163,17 @@ const ProfilePage = () => {
                         placeholder="Business Registration Number"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">License Number</label>
+                      <input
+                        type="text"
+                        name="licenseNumber"
+                        value={formData.licenseNumber}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm"
+                        placeholder="License Number"
+                      />
+                    </div>
                     <div className="sm:col-span-2">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Company Address</label>
                       <input
@@ -182,6 +215,10 @@ const ProfilePage = () => {
                     <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                       <FiBriefcase className="w-5 h-5 text-slate-400" />
                       <span>Reg: {user?.businessRegistrationNumber || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                      <FiBriefcase className="w-5 h-5 text-slate-400" />
+                      <span>Lic: {user?.licenseNumber || 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                       <FiCalendar className="w-5 h-5 text-slate-400" />

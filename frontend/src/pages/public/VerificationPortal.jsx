@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash, FiAlertTriangle } from 'react-icons/fi';
+import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash, FiAlertTriangle, FiCamera } from 'react-icons/fi';
 import publicService from '../../services/publicService';
 import Button from '../../components/ui/Button';
 import ReportCounterfeitModal from '../../components/ui/ReportCounterfeitModal';
@@ -62,7 +62,7 @@ const VerificationPortal = () => {
           Verify Product Authenticity
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
-          Enter the unique Product ID found on your product's QR code to verify its cryptographic proof on the Stellar Blockchain.
+          Enter the unique Product ID found on your product's QR code or scan the QR code to verify its cryptographic proof on the Stellar Blockchain.
         </p>
         
         <div className="relative max-w-xl mx-auto shadow-2xl rounded-2xl group">
@@ -85,6 +85,22 @@ const VerificationPortal = () => {
               {loading ? 'Verifying...' : 'Verify'}
             </button>
           </div>
+        </div>
+
+        <div className="mt-6 flex items-center justify-center space-x-4 text-slate-500 dark:text-slate-400">
+          <div className="h-px bg-slate-200 dark:bg-slate-700 w-16"></div>
+          <span className="text-sm font-medium uppercase tracking-wider">OR</span>
+          <div className="h-px bg-slate-200 dark:bg-slate-700 w-16"></div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <Link 
+            to="/scan"
+            className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:text-primary dark:hover:text-primary rounded-xl transition-all shadow-sm hover:shadow-md font-medium"
+          >
+            <FiCamera className="w-5 h-5" />
+            Scan QR Code Instead
+          </Link>
         </div>
       </motion.div>
 

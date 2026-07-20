@@ -56,6 +56,36 @@ const sendCounterfeitReportEmail = async (manufacturerEmail, reportData, product
   }
 };
 
+const sendContactEmail = async (contactData) => {
+  try {
+    const info = await transporter.sendMail({
+      from: '"TrueTrace Website" <no-reply@truetrace.com>',
+      to: 'hello@truetrace.io',
+      subject: `New Contact Form Submission: ${contactData.subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #0ea5e9; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0;">New Message from Website</h2>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>From:</strong> ${contactData.email}</p>
+            <p><strong>Subject:</strong> ${contactData.subject}</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <p style="white-space: pre-wrap;">${contactData.message}</p>
+          </div>
+        </div>
+      `
+    });
+    
+    console.log('Contact Message sent: %s', info.messageId);
+    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    return info;
+  } catch (error) {
+    console.error('Error sending contact email:', error);
+  }
+};
+
 module.exports = {
-  sendCounterfeitReportEmail
+  sendCounterfeitReportEmail,
+  sendContactEmail
 };

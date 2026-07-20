@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   // Common Fields
   role: {
     type: String,
-    enum: ['admin', 'manufacturer', 'customer'],
+    enum: ['superadmin', 'admin', 'manufacturer', 'quality_inspector', 'customer'],
     required: true
   },
   email: {

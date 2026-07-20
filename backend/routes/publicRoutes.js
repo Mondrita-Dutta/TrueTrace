@@ -8,6 +8,7 @@ const Report = require('../models/Report');
 const User = require('../models/User');
 const upload = require('../config/multerConfig');
 const emailService = require('../services/emailService');
+const ContactMessage = require('../models/ContactMessage');
 
 // @desc    Verify product via Product ID
 // @route   GET /api/public/verify/:productId
@@ -46,8 +47,8 @@ router.get('/verify/:productId', async (req, res) => {
       productName: product.productName,
       serialNumber: product.serialNumber,
       batchNumber: product.batchNumber,
-      manufacturingDate: product.manufacturingDate,
-      expiryDate: product.expiryDate || '',
+      manufacturingDate: product.manufacturingDate ? new Date(product.manufacturingDate).toISOString().split('T')[0] : '',
+      expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '',
       timestamp: product.blockchainTimestamp ? new Date(product.blockchainTimestamp).toISOString() : new Date(product.createdAt).toISOString()
     };
     
@@ -164,6 +165,37 @@ router.post('/report', upload.single('reportImage'), async (req, res) => {
   } catch (error) {
     console.error('Report submission error:', error);
     return res.status(500).json({ success: false, message: 'Failed to submit report.' });
+  }
+});
+
+// @desc    Submit contact form
+// @route   POST /api/public/contact
+// @access  Public
+router.post('/contact', async (req, res) => {
+  try {
+    const { email, subject, message } = req.body;
+    
+    if (!email || !subject || !message) {
+      return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
+    }
+
+    const newMessage = await ContactMessage.create({
+      email,
+      subject,
+      message
+    });
+
+    // Send email notification
+    await emailService.sendContactEmail({ email, subject, message });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Message sent successfully. We will get back to you soon!',
+      data: newMessage
+    });
+  } catch (error) {
+    console.error('Contact submission error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to send message.' });
   }
 });
 

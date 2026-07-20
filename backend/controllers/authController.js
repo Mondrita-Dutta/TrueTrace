@@ -48,16 +48,26 @@ const register = async (req, res) => {
     const user = await User.create(userData);
 
     if (user) {
-      res.success({
-        _id: user._id,
-        role: user.role,
-        email: user.email,
-        status: user.status,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        companyName: user.companyName,
-        token: generateToken(user._id)
-      }, 'Registration successful', 201);
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful',
+        data: {
+          _id: user._id,
+          role: user.role,
+          email: user.email,
+          status: user.status,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          companyName: user.companyName,
+          phone: user.phone,
+          companyAddress: user.companyAddress,
+          businessRegistrationNumber: user.businessRegistrationNumber,
+          licenseNumber: user.licenseNumber,
+          country: user.country,
+          website: user.website,
+          token: generateToken(user._id)
+        }
+      });
     } else {
       res.error('Invalid user data', 400);
     }
@@ -106,6 +116,12 @@ const login = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       companyName: user.companyName,
+      phone: user.phone,
+      companyAddress: user.companyAddress,
+      businessRegistrationNumber: user.businessRegistrationNumber,
+      licenseNumber: user.licenseNumber,
+      country: user.country,
+      website: user.website,
       token: generateToken(user._id)
     }, 'Login successful');
   } catch (error) {

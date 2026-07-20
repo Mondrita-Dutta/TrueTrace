@@ -26,8 +26,20 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
   }, [showProfileMenu]);
 
   const getInitials = () => {
-    const name = user?.companyName || user?.firstName || 'User';
+    let name = 'User';
+    if (user?.role === 'superadmin' || user?.role === 'admin') {
+      name = user?.firstName || 'Admin';
+    } else {
+      name = user?.companyName || user?.firstName || 'User';
+    }
     return name.substring(0, 2).toUpperCase();
+  };
+
+  const getDisplayName = () => {
+    if (user?.role === 'superadmin' || user?.role === 'admin') {
+      return user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Super Admin';
+    }
+    return user?.companyName || user?.firstName || 'Manufacturer';
   };
 
   return (
@@ -90,7 +102,7 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
               {getInitials()}
             </div>
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden xl:block">
-              {user?.companyName || user?.firstName || 'Manufacturer'}
+              {getDisplayName()}
             </span>
           </button>
 
@@ -105,7 +117,7 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
                   className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden z-50"
                 >
                   <div className="p-4 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.companyName || user?.firstName || 'Manufacturer'}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{getDisplayName()}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || 'admin@techcorp.com'}</p>
                   </div>
                   <div className="py-2">

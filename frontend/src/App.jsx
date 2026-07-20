@@ -14,9 +14,10 @@ import NotFoundPage from './pages/public/NotFoundPage';
 import VerificationPortal from './pages/public/VerificationPortal';
 import ScannerPage from './pages/public/ScannerPage';
 
-// Guards
+// Guards & Utils
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import RoleGuard from './components/routing/RoleGuard';
+import ScrollToTop from './components/routing/ScrollToTop';
 
 // Manufacturer Dashboard Pages
 import ManufacturerDashboardLayout from './layouts/ManufacturerDashboardLayout';
@@ -33,13 +34,15 @@ import SettingsPage from './pages/manufacturer/SettingsPage';
 import HelpPage from './pages/manufacturer/HelpPage';
 
 // Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboardLayout from './layouts/AdminDashboardLayout';
+import AdminDashboardHome from './pages/admin/AdminDashboardHome';
 import ManageUsersPage from './pages/admin/ManageUsersPage';
 import SystemReportsPage from './pages/admin/SystemReportsPage';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route element={<MainLayout />}>
@@ -56,9 +59,9 @@ function App() {
         </Route>
 
         {/* Protected Admin Routes */}
-        <Route element={<RoleGuard roles={['admin']} />}>
-          <Route path="/admin" element={<DashboardLayout />}>
-            <Route index element={<AdminDashboard />} />
+        <Route element={<RoleGuard roles={['admin', 'superadmin']} />}>
+          <Route path="/admin" element={<AdminDashboardLayout />}>
+            <Route index element={<AdminDashboardHome />} />
             <Route path="users" element={<ManageUsersPage />} />
             <Route path="reports" element={<SystemReportsPage />} />
           </Route>

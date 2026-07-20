@@ -3,12 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { FiMenu, FiX, FiMoon, FiSun } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -56,12 +58,23 @@ const Navbar = () => {
             <button onClick={toggleTheme} className="text-slate-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
               {isDark ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
-            <Link to="/login">
-              <Button variant="ghost" size="sm">Login</Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="primary" size="sm">Register</Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link to={user?.role === 'admin' || user?.role === 'superadmin' ? '/admin' : '/manufacturer'}>
+                  <Button variant="ghost" size="sm">Dashboard</Button>
+                </Link>
+                <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">Login</Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="primary" size="sm">Register</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -99,12 +112,23 @@ const Navbar = () => {
               ))}
             </ul>
             <div className="flex flex-col space-y-3">
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full">Login</Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="primary" className="w-full">Register</Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link to={user?.role === 'admin' || user?.role === 'superadmin' ? '/admin' : '/manufacturer'} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Dashboard</Button>
+                  </Link>
+                  <Button variant="primary" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>Logout</Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Login</Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="primary" className="w-full">Register</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

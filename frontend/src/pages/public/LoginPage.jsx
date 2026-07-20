@@ -27,7 +27,7 @@ const LoginPage = () => {
 
       const res = await loginWithWallet(address);
       
-      if (res.data.role === 'admin') navigate('/admin');
+      if (res.data.role === 'admin' || res.data.role === 'superadmin') navigate('/admin');
       else if (res.data.role === 'manufacturer') navigate('/manufacturer');
       else navigate('/');
     } catch (error) {
@@ -43,7 +43,7 @@ const LoginPage = () => {
     setApiError('');
     try {
       const res = await login(data.email, data.password);
-      if (res.data.role === 'admin') navigate('/admin');
+      if (res.data.role === 'admin' || res.data.role === 'superadmin') navigate('/admin');
       else if (res.data.role === 'manufacturer') navigate('/manufacturer');
       else navigate('/');
     } catch (error) {

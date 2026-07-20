@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const { register, login, getMe, updateProfile, walletRegister, walletLogin } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
+const { logAction } = require('../middlewares/auditMiddleware');
 
 const router = express.Router();
 
@@ -17,10 +18,10 @@ const loginValidation = [
   body('password', 'Password is required').exists()
 ];
 
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
-router.post('/wallet/register', walletRegister);
-router.post('/wallet/login', walletLogin);
+router.post('/register', registerValidation, logAction('Register', 'User'), register);
+router.post('/login', loginValidation, logAction('Login', 'User'), login);
+router.post('/wallet/register', logAction('Wallet Register', 'User'), walletRegister);
+router.post('/wallet/login', logAction('Wallet Login', 'User'), walletLogin);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 

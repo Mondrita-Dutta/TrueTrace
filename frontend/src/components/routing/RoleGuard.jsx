@@ -20,8 +20,9 @@ const RoleGuard = ({ roles }) => {
 
   if (!roles.includes(user?.role)) {
     // If authenticated but wrong role, send them to their respective dash
-    if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'superadmin' || user?.role === 'admin') return <Navigate to="/admin" replace />;
     if (user?.role === 'manufacturer') return <Navigate to="/manufacturer" replace />;
+    if (user?.role === 'quality_inspector') return <Navigate to="/inspector" replace />;
     return <Navigate to="/" replace />; // fallback
   }
 

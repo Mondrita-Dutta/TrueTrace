@@ -40,6 +40,12 @@ const ProductRegistrationPage = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [parsedCsvData, setParsedCsvData] = useState([]);
 
+  // Helper to get local date string (YYYY-MM-DD) avoiding UTC midnight offset bugs
+  const getLocalDateString = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+
   const [formData, setFormData] = useState({
     productName: '', brandName: '', category: '', customCategory: '', description: '',
     batchNumber: '', serialNumber: '', manufacturingDate: '', expiryDate: '', 
@@ -417,12 +423,12 @@ const ProductRegistrationPage = () => {
                   )}
                   <div>
                     <label className="block text-sm font-semibold mb-1">Mfg Date <span className="text-danger">*</span></label>
-                    <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className={`w-full p-3 rounded-xl border ${errors.manufacturingDate ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
+                    <input type="date" name="manufacturingDate" value={formData.manufacturingDate} onChange={handleChange} max={getLocalDateString()} className={`w-full p-3 rounded-xl border ${errors.manufacturingDate ? 'border-danger' : 'border-slate-200 dark:border-slate-600'} bg-white dark:bg-slate-700 dark:text-white`} />
                     {errors.manufacturingDate && <p className="text-danger text-xs mt-1">{errors.manufacturingDate}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1">Expiry Date (Optional)</label>
-                    <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange} min={formData.manufacturingDate || new Date().toISOString().split('T')[0]} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
+                    <input type="date" name="expiryDate" value={formData.expiryDate} onChange={handleChange} min={formData.manufacturingDate || getLocalDateString()} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold mb-1">Country of Origin <span className="text-danger">*</span></label>

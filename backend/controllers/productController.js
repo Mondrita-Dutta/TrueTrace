@@ -355,7 +355,7 @@ exports.publishToBlockchain = async (req, res) => {
       batchNumber: product.batchNumber,
       manufacturingDate: product.manufacturingDate,
       expiryDate: product.expiryDate || '',
-      timestamp: new Date().toISOString()
+      timestamp: product.blockchainTimestamp ? new Date(product.blockchainTimestamp).toISOString() : new Date(product.createdAt).toISOString()
     };
 
     // Publish to Stellar
@@ -506,6 +506,15 @@ exports.deleteTemplate = async (req, res) => {
 
 exports.createProductBatch = async (req, res) => {
   try {
+    // Trim all string fields in req.body to prevent hash mismatch bugs
+    if (req.body) {
+      Object.keys(req.body).forEach(key => {
+        if (typeof req.body[key] === 'string') {
+          req.body[key] = req.body[key].trim();
+        }
+      });
+    }
+
     const { quantity, ...productData } = req.body;
     const qty = parseInt(quantity);
     if (!qty || qty < 1 || qty > 500) {
@@ -528,40 +537,7 @@ exports.createProductBatch = async (req, res) => {
       imagePath = `/uploads/products/${req.file.filename}`;
     }
     
-    // --- Blockchain Batch Publish ---
-    let txHash = null;
-    let txLedger = null;
-    let bHash = null;
-    let bTimestamp = null;
-    let bStatus = 'Pending';
-    let pStatus = status || 'Pending Blockchain';
-
-    try {
-      const batchPayload = {
-        manufacturerName: manufacturerCompany || manufacturerName,
-        brandName,
-        productName,
-        batchNumber,
-        manufacturingDate,
-        expiryDate: expiryDate || '',
-        quantity: qty,
-        timestamp: new Date().toISOString()
-      };
-      
-      const txData = await stellarService.publishProductToBlockchain(`BATCH-${batchNumber}`, batchPayload);
-      txHash = txData.hash;
-      txLedger = txData.ledger;
-      bHash = txData.localHash;
-      bTimestamp = batchPayload.timestamp;
-      bStatus = 'Verified';
-      pStatus = 'Verified';
-      console.log(`[Batch Register] Successfully published batch ${batchNumber} to Stellar at ${txData.timestamp}`);
-    } catch (err) {
-      console.error('[Batch Register] Blockchain publish failed:', err);
-      // We continue with Pending Blockchain status if it fails
-    }
-    // --------------------------------
-
+    const pStatus = status || 'Pending Blockchain';
     const productsToSave = [];
     
     for (let i = 1; i <= qty; i++) {
@@ -570,32 +546,46 @@ exports.createProductBatch = async (req, res) => {
       const productId = `TT-${currentYear}-${sequence}`;
       const serialNumber = `${batchNumber}-${String(i).padStart(4, '0')}`;
       
+      const itemTimestamp = new Date().toISOString();
       const qrDataPayload = {
         productId,
         manufacturerId: req.user.id,
-        timestamp: new Date().toISOString(),
+        timestamp: itemTimestamp,
       };
       const qrDataString = JSON.stringify(qrDataPayload);
       
       const qrFilename = `qr-${productId}.png`;
       const qrFilePath = path.join(qrDir, qrFilename);
       await QRCode.toFile(qrFilePath, qrDataString, {
-        errorCorrectionLevel: 'H', width: 400, margin: 2,
+        errorCorrectionLevel: 'H', width: 400, margin: 4,
         color: { dark: '#000000', light: '#ffffff' }
       });
       const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;
+      
+      const productDataPayload = {
+        manufacturerName: manufacturerCompany || manufacturerName,
+        brandName,
+        productName,
+        serialNumber,
+        batchNumber,
+        manufacturingDate,
+        expiryDate: expiryDate || '',
+        timestamp: itemTimestamp
+      };
+      const sortedData = JSON.stringify(productDataPayload, Object.keys(productDataPayload).sort());
+      const localHash = require('crypto').createHash('sha256').update(sortedData).digest('hex');
       
       productsToSave.push(new Product({
         productId, productName, category, brandName, manufacturerName, manufacturerCompany,
         manufacturerId: req.user.id, description, batchNumber, serialNumber,
         manufacturingDate, expiryDate, countryOfOrigin, warrantyPeriod, additionalNotes,
         status: pStatus, 
-        blockchainStatus: bStatus,
-        transactionHash: txHash,
-        ledgerNumber: txLedger,
-        blockchainHash: bHash,
+        blockchainStatus: 'Pending',
+        transactionHash: null,
+        ledgerNumber: null,
+        blockchainHash: localHash,
         network: 'Stellar Testnet',
-        blockchainTimestamp: bTimestamp,
+        blockchainTimestamp: itemTimestamp,
         productImage: imagePath,
         qrData: qrDataString, 
         qrImageUrl

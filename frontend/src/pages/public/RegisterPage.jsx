@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { FaBuilding, FaUser } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
@@ -13,8 +13,9 @@ import api from '../../services/api';
 import { toast } from 'react-toastify';
 
 const RegisterPage = () => {
+  const location = useLocation();
   const { register: registerForm, handleSubmit, watch, formState: { errors }, trigger, getValues } = useForm();
-  const [role, setRole] = useState('customer'); // 'customer' or 'manufacturer'
+  const [role, setRole] = useState(location.state?.role || 'customer'); // 'customer' or 'manufacturer'
   const [isLoading, setIsLoading] = useState(false);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [apiError, setApiError] = useState('');

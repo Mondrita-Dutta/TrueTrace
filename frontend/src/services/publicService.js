@@ -9,6 +9,10 @@ const publicService = {
   verifyProduct: async (productId) => {
     const res = await publicApi.get(`/verify/${productId}`);
     return res.data;
+  },
+  submitContactForm: async (data) => {
+    const res = await publicApi.post('/contact', data);
+    return res.data;
   }
 };
 

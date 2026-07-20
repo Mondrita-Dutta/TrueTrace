@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaShieldAlt, FaQrcode, FaChartLine, FaChevronDown } from 'react-icons/fa';
 import Button from '../../components/ui/Button';
@@ -49,8 +50,12 @@ const LandingPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4"
           >
-            <Button size="lg" className="w-full sm:w-auto">Start Verifying</Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/50 backdrop-blur-sm dark:bg-slate-900/50">Register as Manufacturer</Button>
+            <Link to="/verify" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full">Start Verifying</Button>
+            </Link>
+            <Link to="/register" state={{ role: 'manufacturer' }} className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full bg-white/50 backdrop-blur-sm dark:bg-slate-900/50">Register as Manufacturer</Button>
+            </Link>
           </motion.div>
         </div>
       </section>
@@ -190,8 +195,12 @@ const LandingPage = () => {
             Join hundreds of manufacturers using TrueTrace to secure their supply chain and build unshakeable trust with customers.
           </p>
           <div className="flex justify-center gap-4">
-            <Button size="lg" className="bg-white text-primary hover:bg-slate-100">Create Free Account</Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 dark:border-white dark:text-white dark:hover:bg-white/10">Contact Sales</Button>
+            <Link to="/register">
+              <Button size="lg" className="bg-white text-primary hover:bg-slate-100">Create Free Account</Button>
+            </Link>
+            <Link to="/contact">
+              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 dark:border-white dark:text-white dark:hover:bg-white/10">Contact Sales</Button>
+            </Link>
           </div>
         </div>
       </section>

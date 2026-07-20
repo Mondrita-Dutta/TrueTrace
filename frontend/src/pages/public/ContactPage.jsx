@@ -6,18 +6,24 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import SectionTitle from '../../components/ui/SectionTitle';
+import publicService from '../../services/publicService';
+import { toast } from 'react-toastify';
 
 const ContactPage = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const onSubmit = (data) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+  const onSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      await publicService.submitContactForm(data);
       setIsSuccess(true);
-    }, 1500);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,7 +43,7 @@ const ContactPage = () => {
               <div className="space-y-6">
                 <div className="flex items-start">
                   <FaMapMarkerAlt className="mt-1 mr-4 text-blue-200" size={20} />
-                  <p>123 Innovation Drive<br />Tech District<br />San Francisco, CA 94103</p>
+                  <p>Agarpara, Debayan 2<br />India, kol-700109</p>
                 </div>
                 <div className="flex items-center">
                   <FaEnvelope className="mr-4 text-blue-200" size={20} />
@@ -51,7 +57,16 @@ const ContactPage = () => {
             </Card>
 
             <div className="aspect-video w-full bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden flex items-center justify-center text-slate-400">
-              [ Google Map Placeholder ]
+              <iframe 
+                src="https://maps.google.com/maps?q=Agarpara,%20Kolkata,%20India&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen="" 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Office Location"
+              ></iframe>
             </div>
           </div>
 

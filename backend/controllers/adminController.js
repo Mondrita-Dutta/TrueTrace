@@ -2,6 +2,8 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Report = require('../models/Report');
 const ScanHistory = require('../models/ScanHistory');
+const mongoose = require('mongoose');
+const os = require('os');
 
 exports.getSystemAnalytics = async (req, res) => {
   try {
@@ -40,6 +42,18 @@ exports.getAllUsers = async (req, res) => {
 exports.updateUserStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    
+    if (status === 'suspended') {
+      // Hard delete the user and all their products
+      await Product.deleteMany({ manufacturerId: req.params.id });
+      const deletedUser = await User.findByIdAndDelete(req.params.id);
+      
+      if (!deletedUser) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      return res.status(200).json({ success: true, message: 'User and all associated products were permanently deleted' });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id, 
       { status },
@@ -64,5 +78,36 @@ exports.getAllReports = async (req, res) => {
   } catch (error) {
     console.error('Admin Reports error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getSystemHealth = async (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    
+    const uptime = process.uptime();
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const usedMemory = totalMemory - freeMemory;
+    const memoryUsagePercent = ((usedMemory / totalMemory) * 100).toFixed(2);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        database: dbStatus,
+        uptime: uptime, // in seconds
+        memory: {
+          total: totalMemory,
+          free: freeMemory,
+          used: usedMemory,
+          usagePercent: memoryUsagePercent
+        },
+        apiStatus: 'healthy',
+        timestamp: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Admin System Health error:', error);
+    res.status(500).json({ success: false, message: 'Server error retrieving system health' });
   }
 };

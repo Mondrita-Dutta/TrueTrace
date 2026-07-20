@@ -3,6 +3,7 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
+const { logAction } = require('../middlewares/auditMiddleware');
 const upload = require('../config/multerConfig');
 const { productValidationRules, validate } = require('../validators/productValidator');
 
@@ -11,7 +12,7 @@ router.use(protect);
 router.use(authorize('manufacturer'));
 
 // Routes
-router.post('/', upload.single('productImage'), productValidationRules(), validate, productController.createProduct);
+router.post('/', upload.single('productImage'), productValidationRules(), validate, logAction('Create Product', 'Product'), productController.createProduct);
 router.get('/', productController.getProducts);
 
 // Categories
@@ -29,8 +30,8 @@ router.put('/bulk/update', productController.bulkUpdateProducts);
 router.post('/blockchain/batch', productController.publishBatchToBlockchain);
 
 router.get('/:id', productController.getProductById);
-router.put('/:id', upload.single('productImage'), productValidationRules(), validate, productController.updateProduct);
-router.post('/:id/blockchain', productController.publishToBlockchain);
-router.delete('/:id', productController.deleteProduct); // Also handles comma-separated IDs for bulk delete
+router.put('/:id', upload.single('productImage'), productValidationRules(), validate, logAction('Update Product', 'Product'), productController.updateProduct);
+router.post('/:id/blockchain', logAction('Blockchain Register', 'Product'), productController.publishToBlockchain);
+router.delete('/:id', logAction('Delete Product', 'Product'), productController.deleteProduct); // Also handles comma-separated IDs for bulk delete
 
 module.exports = router;

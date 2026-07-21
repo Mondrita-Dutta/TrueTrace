@@ -440,7 +440,7 @@ exports.publishBatchToBlockchain = async (req, res) => {
     });
 
     if (products.length === 0) {
-      return res.error('No eligible products found to publish', 404);
+      return res.error('All selected items are already verified or not eligible', 400);
     }
 
     const publishedProducts = [];
@@ -700,3 +700,4 @@ exports.bulkCreateProducts = async (req, res) => {
     return res.error(error.message, 500);
   }
 };
+

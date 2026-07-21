@@ -34,7 +34,7 @@ const ProductsPage = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   
   // View Mode
-  const [viewMode, setViewMode] = useState('flat'); // 'flat' or 'batch'
+  const [viewMode, setViewMode] = useState('batch'); // 'flat' or 'batch'
 
   // Modals state
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -98,9 +98,9 @@ const ProductsPage = () => {
   const handleDelete = async () => {
     try {
       setIsActionLoading(true);
-      const ids = modalData?.isBulk ? selectedIds.join(',') : modalData._id;
+      const ids = modalData?.batchIds ? modalData.batchIds.join(',') : (modalData?.isBulk ? selectedIds.join(',') : modalData._id);
       await productService.deleteProducts(ids);
-      toast.success(modalData?.isBulk ? 'Products deleted' : 'Product deleted');
+      toast.success(modalData?.isBulk || modalData?.batchIds ? 'Products deleted' : 'Product deleted');
       setIsDeleteOpen(false);
       setSelectedIds([]);
       fetchProducts(pagination.page);
@@ -111,28 +111,43 @@ const ProductsPage = () => {
     }
   };
 
-  const handleBulkStatusUpdate = async (status) => {
+  const handleBulkStatusUpdate = async (status, specificIds = null) => {
     try {
-      await productService.bulkUpdateProducts(selectedIds, { status });
+      const idsToUpdate = specificIds || selectedIds;
+      await productService.bulkUpdateProducts(idsToUpdate, { status });
       toast.success(`Products marked as ${status}`);
-      setSelectedIds([]);
+      if (!specificIds) setSelectedIds([]);
       fetchProducts(pagination.page);
     } catch (err) {
       toast.error(err.message || 'Failed to update products');
     }
   };
 
-  const handleBulkPublish = async () => {
+  const handleBulkPublish = async (specificIds = null) => {
     try {
       setIsActionLoading(true);
-      const res = await productService.publishBatchToBlockchain(selectedIds);
+      const idsToPublish = specificIds && Array.isArray(specificIds) ? specificIds : selectedIds;
+      const res = await productService.publishBatchToBlockchain(idsToPublish);
       toast.success(res.message || 'Products published successfully');
-      setSelectedIds([]);
+      if (!specificIds || !Array.isArray(specificIds)) setSelectedIds([]);
       fetchProducts(pagination.page);
     } catch (err) {
-      toast.error(err.message || 'Failed to publish products');
+      toast.error(err.response?.data?.message || err.message || 'Failed to publish products');
     } finally {
       setIsActionLoading(false);
+    }
+  };
+
+  const toggleBatchSelect = (batchIds) => {
+    const allSelected = batchIds.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(selectedIds.filter(id => !batchIds.includes(id)));
+    } else {
+      const newIds = [...selectedIds];
+      batchIds.forEach(id => {
+        if (!newIds.includes(id)) newIds.push(id);
+      });
+      setSelectedIds(newIds);
     }
   };
 
@@ -238,9 +253,11 @@ const ProductsPage = () => {
           <button onClick={() => navigate(`/manufacturer/products/${product._id}`)} className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View Details">
             <FiEye />
           </button>
-          <button onClick={() => { setModalData(product); setIsDeleteOpen(true); }} className="p-2 text-slate-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete">
-            <FiTrash2 />
-          </button>
+          {!isGrouped && (
+            <button onClick={() => { setModalData(product); setIsDeleteOpen(true); }} className="p-2 text-slate-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete">
+              <FiTrash2 />
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -295,18 +312,18 @@ const ProductsPage = () => {
             {/* View Mode Toggle */}
             <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl shrink-0 border border-slate-200 dark:border-slate-700">
               <button 
-                onClick={() => setViewMode('flat')} 
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'flat' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-400 hover:text-slate-600'}`}
-                title="List View"
-              >
-                <FiList className="w-5 h-5" />
-              </button>
-              <button 
                 onClick={() => setViewMode('batch')} 
                 className={`p-1.5 rounded-lg transition-colors ${viewMode === 'batch' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-400 hover:text-slate-600'}`}
                 title="Group by Batch"
               >
                 <FiLayers className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setViewMode('flat')} 
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === 'flat' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                title="List View"
+              >
+                <FiList className="w-5 h-5" />
               </button>
             </div>
 
@@ -427,16 +444,28 @@ const ProductsPage = () => {
                   Object.keys(groupedProducts).map(batch => (
                     <React.Fragment key={batch}>
                       <tr className="bg-slate-100/80 dark:bg-slate-700/80 border-t-4 border-white dark:border-slate-800">
-                        <td colSpan="7" className="px-6 py-3">
+                        <td className="px-6 py-3">
+                           <button onClick={() => toggleBatchSelect(groupedProducts[batch].map(p=>p._id))} className="text-slate-400 hover:text-primary transition-colors outline-none focus:ring-2 focus:ring-primary rounded">
+                             {groupedProducts[batch].every(p => selectedIds.includes(p._id)) ? <FiCheckSquare className="w-5 h-5 text-primary" /> : <FiSquare className="w-5 h-5" />}
+                           </button>
+                        </td>
+                        <td colSpan="3" className="px-6 py-3">
                           <div className="flex items-center gap-2">
                             <FiLayers className="text-primary" />
-                            <span className="font-bold text-slate-800 dark:text-slate-200 tracking-wide uppercase text-xs">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 tracking-wide uppercase text-sm">
                               Batch: {batch}
                             </span>
                             <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full ml-2">
                               {groupedProducts[batch].length} items
                             </span>
                           </div>
+                        </td>
+                        <td colSpan="3" className="px-6 py-3 text-right">
+                           <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => handleBulkPublish(groupedProducts[batch].map(p=>p._id))} className="text-sm font-semibold bg-white dark:bg-slate-800 px-3.5 py-1.5 rounded-lg shadow-sm text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiLink /> Publish</button>
+                              <button onClick={() => handleBulkStatusUpdate('Archived', groupedProducts[batch].map(p=>p._id))} className="text-sm font-semibold bg-white dark:bg-slate-800 px-3.5 py-1.5 rounded-lg shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-600 dark:hover:bg-slate-600 hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiArchive /> Archive</button>
+                              <button onClick={() => { setModalData({ isBulk: true, batchIds: groupedProducts[batch].map(p=>p._id) }); setIsDeleteOpen(true); }} className="text-sm font-semibold bg-red-100 dark:bg-red-900/40 px-3.5 py-1.5 rounded-lg shadow-sm text-danger hover:bg-danger hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiTrash2 /> Delete</button>
+                           </div>
                         </td>
                       </tr>
                       {groupedProducts[batch].map(product => renderProductRow(product, true))}

@@ -1,0 +1,14 @@
+C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\deps\serde-4ce078c880dae0a9.d: C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\build\serde-126e2ba7228904a3\out/private.rs
+
+C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\deps\libserde-4ce078c880dae0a9.rlib: C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\build\serde-126e2ba7228904a3\out/private.rs
+
+C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\deps\libserde-4ce078c880dae0a9.rmeta: C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\build\serde-126e2ba7228904a3\out/private.rs
+
+C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\lib.rs:
+C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\integer128.rs:
+C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\mod.rs:
+C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\de.rs:
+C:\Users\MD\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.229\src\private\ser.rs:
+C:\Users\MD\Desktop\level3-orange\TrueTrace\blockchain\target\release\build\serde-126e2ba7228904a3\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\MD\\Desktop\\level3-orange\\TrueTrace\\blockchain\\target\\release\\build\\serde-126e2ba7228904a3\\out

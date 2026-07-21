@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo 'No frontend tests currently configured' && exit 0"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^2.5.0",

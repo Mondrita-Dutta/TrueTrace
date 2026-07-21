@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Smart Contract Tests
         working-directory: ./blockchain
-        run: cargo test
+        run: cargo test --locked
 
   build:
     name: Build Applications
@@ -70,7 +70,7 @@ jobs:
 
       - name: Build Smart Contract
         working-directory: ./blockchain
-        run: cargo build --target wasm32-unknown-unknown --release
+        run: cargo build --target wasm32-unknown-unknown --release --locked
 
   deploy_contract:
     name: Deploy Smart Contract

@@ -3,7 +3,7 @@ set -e
 
 echo "Building the smart contract..."
 cd blockchain
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32-unknown-unknown --release --locked
 
 echo "Deploying the smart contract to Testnet..."
 # Ensure stellar-cli is available (should be installed by GitHub Actions step)

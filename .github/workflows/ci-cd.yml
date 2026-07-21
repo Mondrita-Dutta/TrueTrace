@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: npm install
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Run Backend Tests
         working-directory: ./backend
@@ -28,7 +28,7 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm install
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Run Frontend Tests
         working-directory: ./frontend
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm install
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Build Frontend
         working-directory: ./frontend

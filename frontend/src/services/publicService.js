@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Public API instance (no auth token required)
 const publicApi = axios.create({
-  baseURL: 'http://localhost:5000/api/public',
+  baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/public` : 'http://localhost:5000/api/public',
 });
 
 const publicService = {

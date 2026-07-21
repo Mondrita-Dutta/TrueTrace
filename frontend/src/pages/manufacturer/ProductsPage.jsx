@@ -316,12 +316,12 @@ const ProductsPage = () => {
                   initial={{ opacity: 0, scale: 0.9, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9, x: 20 }}
-                  className="flex items-center gap-2 bg-primary/10 dark:bg-primary/20 px-3 py-1.5 rounded-xl border border-primary/20 shrink-0"
+                  className="flex items-center gap-2.5 bg-primary/10 dark:bg-primary/20 p-2 rounded-xl border border-primary/20 shrink-0"
                 >
-                  <span className="text-sm font-medium text-primary mr-2">{selectedIds.length} selected</span>
-                  <button onClick={handleBulkPublish} className="text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded-lg shadow-sm text-slate-700 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1"><FiLink /> Publish</button>
-                  <button onClick={() => handleBulkStatusUpdate('Archived')} className="text-xs bg-white dark:bg-slate-800 px-2 py-1 rounded-lg shadow-sm text-slate-700 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1"><FiArchive /> Archive</button>
-                  <button onClick={() => { setModalData({ isBulk: true }); setIsDeleteOpen(true); }} className="text-xs bg-red-100 dark:bg-red-900/40 px-2 py-1 rounded-lg shadow-sm text-danger hover:bg-red-200 transition-colors flex items-center gap-1"><FiTrash2 /> Delete</button>
+                  <span className="text-sm font-bold text-primary mx-2">{selectedIds.length} selected</span>
+                  <button onClick={handleBulkPublish} className="text-sm font-semibold bg-white dark:bg-slate-800 px-3.5 py-2 rounded-lg shadow-sm text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiLink /> Publish</button>
+                  <button onClick={() => handleBulkStatusUpdate('Archived')} className="text-sm font-semibold bg-white dark:bg-slate-800 px-3.5 py-2 rounded-lg shadow-sm text-slate-700 dark:text-slate-200 hover:bg-slate-600 dark:hover:bg-slate-600 hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiArchive /> Archive</button>
+                  <button onClick={() => { setModalData({ isBulk: true }); setIsDeleteOpen(true); }} className="text-sm font-semibold bg-red-100 dark:bg-red-900/40 px-3.5 py-2 rounded-lg shadow-sm text-danger hover:bg-danger hover:text-white hover:-translate-y-0.5 hover:shadow-md transition-all flex items-center gap-1.5"><FiTrash2 /> Delete</button>
                 </motion.div>
               )}
             </AnimatePresence>

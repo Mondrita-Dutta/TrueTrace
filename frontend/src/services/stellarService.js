@@ -1,6 +1,10 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { Address, nativeToScVal, scValToNative } from '@stellar/stellar-sdk';
 
 const server = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org");
+const rpcServer = new StellarSdk.rpc.Server("https://soroban-testnet.stellar.org");
+
+const CONTRACT_ID = import.meta.env.VITE_SOROBAN_CONTRACT_ID || '';
 
 export const fetchBalance = async (publicKey) => {
   try {
@@ -64,5 +68,104 @@ export const submitTransaction = async (signedXdr) => {
       errorDetails = JSON.stringify(error.response.data.extras.result_codes);
     }
     return { success: false, error: errorDetails };
+  }
+};
+
+// --- Soroban Contract Interactions ---
+
+export const buildSorobanTransaction = async (sourcePublicKey, method, args) => {
+  if (!CONTRACT_ID) throw new Error("Contract ID not found in .env. Please deploy the contract first.");
+
+  const account = await server.loadAccount(sourcePublicKey);
+  const contract = new StellarSdk.Contract(CONTRACT_ID);
+
+  const tx = new StellarSdk.TransactionBuilder(account, {
+    fee: StellarSdk.BASE_FEE,
+    networkPassphrase: StellarSdk.Networks.TESTNET,
+  })
+    .addOperation(contract.call(method, ...args))
+    .setTimeout(180)
+    .build();
+
+  // For Soroban, we must prepare the transaction to get resources and fees.
+  const preparedTx = await rpcServer.prepareTransaction(tx);
+  return preparedTx.toXDR();
+};
+
+export const buildRegisterProductTx = async (sourcePublicKey, productId, hash) => {
+  const args = [
+    nativeToScVal(productId, { type: 'string' }),
+    new Address(sourcePublicKey).toScVal(),
+    nativeToScVal(hash, { type: 'string' })
+  ];
+  return await buildSorobanTransaction(sourcePublicKey, "register_product", args);
+};
+
+export const buildUpdateProductTx = async (sourcePublicKey, productId, hash) => {
+  const args = [
+    nativeToScVal(productId, { type: 'string' }),
+    new Address(sourcePublicKey).toScVal(),
+    nativeToScVal(hash, { type: 'string' })
+  ];
+  return await buildSorobanTransaction(sourcePublicKey, "update_product", args);
+};
+
+export const buildReportCounterfeitTx = async (sourcePublicKey, productId) => {
+  const args = [
+    nativeToScVal(productId, { type: 'string' }),
+    new Address(sourcePublicKey).toScVal()
+  ];
+  return await buildSorobanTransaction(sourcePublicKey, "report_counterfeit", args);
+};
+
+export const submitSorobanTransaction = async (signedXdr) => {
+  try {
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdr, StellarSdk.Networks.TESTNET);
+    const sendResponse = await rpcServer.sendTransaction(transaction);
+    
+    if (sendResponse.status === "PENDING") {
+      let statusResponse = await rpcServer.getTransaction(sendResponse.hash);
+      // Poll for completion
+      while (statusResponse.status === "NOT_FOUND") {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        statusResponse = await rpcServer.getTransaction(sendResponse.hash);
+      }
+      
+      if (statusResponse.status === "SUCCESS") {
+        return { success: true, hash: sendResponse.hash, result: statusResponse };
+      }
+      return { success: false, error: statusResponse.resultXdr || "Transaction Failed" };
+    }
+    
+    return { success: false, error: sendResponse.errorResultXdr || 'Unknown error' };
+  } catch (error) {
+    console.error("Soroban submit error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const queryProductFromContract = async (productId) => {
+  if (!CONTRACT_ID) return null;
+  try {
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const args = [nativeToScVal(productId, { type: 'string' })];
+    
+    // Simulate transaction to read state
+    const account = new StellarSdk.Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0"); 
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: "100", networkPassphrase: StellarSdk.Networks.TESTNET })
+      .addOperation(contract.call("get_product", ...args))
+      .setTimeout(30)
+      .build();
+      
+    const sim = await rpcServer.simulateTransaction(tx);
+    if (sim.resultError) return null;
+    
+    if (sim.result && sim.result.retval) {
+      return scValToNative(sim.result.retval);
+    }
+    return null;
+  } catch (e) {
+    console.error("Soroban query error:", e);
+    return null;
   }
 };

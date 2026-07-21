@@ -74,37 +74,27 @@ exports.createProduct = async (req, res) => {
     });
     const qrImageUrl = `/uploads/qrcodes/${qrFilename}`;
 
-    // --- Blockchain Publish ---
+    // --- Blockchain Publish Setup ---
     let txHash = null;
     let txLedger = null;
-    let bHash = null;
-    let bTimestamp = null;
-    let bStatus = 'Pending';
     let pStatus = status || 'Pending Blockchain';
-
-    try {
-      const productPayload = {
-        manufacturerName: manufacturerCompany || manufacturerName,
-        brandName,
-        productName,
-        serialNumber,
-        batchNumber,
-        manufacturingDate,
-        expiryDate: expiryDate || '',
-        timestamp: new Date().toISOString()
-      };
-      
-      const txData = await stellarService.publishProductToBlockchain(productId, productPayload);
-      txHash = txData.hash;
-      txLedger = txData.ledger;
-      bHash = txData.localHash;
-      bTimestamp = productPayload.timestamp;
-      bStatus = 'Verified';
-      pStatus = 'Verified';
-      console.log(`[Register] Successfully published product ${productId} to Stellar at ${txData.timestamp}`);
-    } catch (err) {
-      console.error('[Register] Blockchain publish failed:', err);
-    }
+    
+    // Always compute the canonical data payload and hash for later Soroban deployment
+    const productPayload = {
+      manufacturerName: manufacturerCompany || manufacturerName,
+      brandName,
+      productName,
+      serialNumber,
+      batchNumber,
+      manufacturingDate,
+      expiryDate: expiryDate || '',
+      timestamp: new Date().toISOString()
+    };
+    
+    const sortedData = JSON.stringify(productPayload, Object.keys(productPayload).sort());
+    const bHash = require('crypto').createHash('sha256').update(sortedData).digest('hex');
+    const bTimestamp = productPayload.timestamp;
+    const bStatus = 'Pending';
     // --------------------------
 
     const product = new Product({
@@ -208,7 +198,27 @@ exports.getProductById = async (req, res) => {
       return res.error('Product not found', 404);
     }
 
-    return res.success(product, 'Product fetched successfully');
+    let computedHash = product.blockchainHash;
+    if (!computedHash) {
+       const crypto = require('crypto');
+       const productDataPayload = {
+          manufacturerName: product.manufacturerCompany || product.manufacturerName,
+          brandName: product.brandName,
+          productName: product.productName,
+          serialNumber: product.serialNumber,
+          batchNumber: product.batchNumber,
+          manufacturingDate: product.manufacturingDate,
+          expiryDate: product.expiryDate || '',
+          timestamp: product.blockchainTimestamp ? new Date(product.blockchainTimestamp).toISOString() : new Date(product.createdAt).toISOString()
+       };
+       const sortedData = JSON.stringify(productDataPayload, Object.keys(productDataPayload).sort());
+       computedHash = crypto.createHash('sha256').update(sortedData).digest('hex');
+    }
+
+    const prodObj = product.toObject();
+    prodObj.blockchainHash = computedHash;
+
+    return res.success(prodObj, 'Product fetched successfully');
   } catch (error) {
     console.error('Get product by id error:', error);
     return res.error('Failed to fetch product', 500);
@@ -376,6 +386,38 @@ exports.publishToBlockchain = async (req, res) => {
   } catch (error) {
     console.error('Publish to blockchain error:', error);
     return res.error(error.message || 'Failed to publish to blockchain', 500);
+  }
+};
+
+// @desc    Mark product as published on Soroban
+// @route   POST /api/products/:id/blockchain/soroban
+// @access  Private (Manufacturer)
+exports.markAsPublishedSoroban = async (req, res) => {
+  try {
+    const { txHash } = req.body;
+    if (!txHash) {
+      return res.error('Transaction hash is required', 400);
+    }
+
+    const product = await Product.findOne({ _id: req.params.id, manufacturerId: req.user.id });
+    if (!product) {
+      return res.error('Product not found', 404);
+    }
+
+    product.blockchainStatus = 'Verified';
+    product.transactionHash = txHash;
+    product.network = 'Stellar Testnet (Soroban)';
+    product.status = 'Verified';
+    
+    // We don't have a specific ledger number initially unless we query the RPC
+    // product.ledgerNumber = ???
+
+    const updatedProduct = await product.save();
+
+    return res.success(updatedProduct, 'Successfully marked as published to Soroban Smart Contract');
+  } catch (error) {
+    console.error('Mark as published Soroban error:', error);
+    return res.error(error.message || 'Failed to mark as published', 500);
   }
 };
 

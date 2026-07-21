@@ -65,6 +65,11 @@ const productService = {
     return res.data;
   },
 
+  markAsPublishedSoroban: async (id, txHash) => {
+    const res = await api.post(`/products/${id}/blockchain/soroban`, { txHash });
+    return res.data;
+  },
+
   publishBatchToBlockchain: async (ids) => {
     const res = await api.post('/products/blockchain/batch', { ids });
     return res.data;

@@ -32,6 +32,7 @@ router.post('/blockchain/batch', productController.publishBatchToBlockchain);
 router.get('/:id', productController.getProductById);
 router.put('/:id', upload.single('productImage'), productValidationRules(), validate, logAction('Update Product', 'Product'), productController.updateProduct);
 router.post('/:id/blockchain', logAction('Blockchain Register', 'Product'), productController.publishToBlockchain);
+router.post('/:id/blockchain/soroban', logAction('Soroban Register', 'Product'), productController.markAsPublishedSoroban);
 router.delete('/:id', logAction('Delete Product', 'Product'), productController.deleteProduct); // Also handles comma-separated IDs for bulk delete
 
 module.exports = router;

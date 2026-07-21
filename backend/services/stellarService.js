@@ -1,15 +1,20 @@
 const StellarSdk = require('@stellar/stellar-sdk');
 const crypto = require('crypto');
+const { nativeToScVal, Address, scValToNative } = StellarSdk;
 
 // Use Testnet
 const server = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
+const rpcServer = new StellarSdk.rpc.Server('https://soroban-testnet.stellar.org');
 const networkPassphrase = StellarSdk.Networks.TESTNET;
 
 let masterKeypair = null;
+let CONTRACT_ID = null;
+
 
 // Initialize the master account (called on server start)
 const initializeStellarAccount = async () => {
   try {
+    CONTRACT_ID = process.env.SOROBAN_CONTRACT_ID;
     if (process.env.STELLAR_SECRET_KEY) {
       masterKeypair = StellarSdk.Keypair.fromSecret(process.env.STELLAR_SECRET_KEY);
       console.log(`[Stellar] Loaded Master Account: ${masterKeypair.publicKey()}`);
@@ -42,50 +47,61 @@ const publishProductToBlockchain = async (productId, productData) => {
   if (!masterKeypair) {
     throw new Error('Stellar master account is not initialized.');
   }
+  if (!CONTRACT_ID) {
+    throw new Error('Soroban contract ID is not configured.');
+  }
 
   try {
-    // 1. Create a SHA-256 hash of the product data
-    // We strictly order the JSON keys to ensure consistent hashing
     const sortedData = JSON.stringify(productData, Object.keys(productData).sort());
-    const hash = crypto.createHash('sha256').update(sortedData).digest();
+    const hashHex = crypto.createHash('sha256').update(sortedData).digest('hex');
     
-    // 2. Load the master account
     const sourceAccount = await server.loadAccount(masterKeypair.publicKey());
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
 
-    // 3. Build the transaction
-    // We use a Payment of 0.0000001 XLM to ourselves just to carry the Memo.Hash
-    // Memo.Hash exactly fits a 32-byte SHA256 hash!
-    const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+    const args = [
+      nativeToScVal(productId, { type: 'string' }),
+      new Address(masterKeypair.publicKey()).toScVal(),
+      nativeToScVal(hashHex, { type: 'string' })
+    ];
+
+    const tx = new StellarSdk.TransactionBuilder(sourceAccount, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: networkPassphrase
     })
-    .addOperation(StellarSdk.Operation.payment({
-      destination: masterKeypair.publicKey(),
-      asset: StellarSdk.Asset.native(),
-      amount: "0.0000001" // Minimum valid amount
-    }))
-    .addMemo(StellarSdk.Memo.hash(hash.toString('hex')))
-    .setTimeout(0) // 0 means infinite timeout, ignoring local system clock differences
+    .addOperation(contract.call('register_product', ...args))
+    .setTimeout(180)
     .build();
 
-    // 4. Sign and submit
-    transaction.sign(masterKeypair);
+    const preparedTx = await rpcServer.prepareTransaction(tx);
+    preparedTx.sign(masterKeypair);
     
-    console.log(`[Stellar] Submitting transaction for product ${productId}...`);
-    const transactionResult = await server.submitTransaction(transaction);
+    console.log(`[Stellar] Submitting Soroban transaction for product ${productId}...`);
+    const sendResponse = await rpcServer.sendTransaction(preparedTx);
     
-    console.log(`[Stellar] Success! Tx Hash: ${transactionResult.hash}`);
+    if (sendResponse.status === "PENDING") {
+      let statusResponse = await rpcServer.getTransaction(sendResponse.hash);
+      while (statusResponse.status === "NOT_FOUND") {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        statusResponse = await rpcServer.getTransaction(sendResponse.hash);
+      }
+      
+      if (statusResponse.status === "SUCCESS") {
+        console.log(`[Stellar] Success! Tx Hash: ${sendResponse.hash}`);
+        return {
+          hash: sendResponse.hash,
+          ledger: statusResponse.latestLedger,
+          stellarUrl: `https://stellar.expert/explorer/testnet/tx/${sendResponse.hash}`,
+          timestamp: new Date().toISOString(),
+          localHash: hashHex
+        };
+      }
+      throw new Error(statusResponse.resultXdr || "Transaction Failed");
+    }
     
-    return {
-      hash: transactionResult.hash,
-      ledger: transactionResult.ledger,
-      stellarUrl: `https://stellar.expert/explorer/testnet/tx/${transactionResult.hash}`,
-      timestamp: new Date().toISOString(),
-      localHash: hash.toString('hex')
-    };
+    throw new Error(sendResponse.errorResultXdr || 'Unknown error');
   } catch (error) {
-    console.error('[Stellar] Publish error:', error.response ? error.response.data : error);
-    throw new Error('Failed to publish to Stellar Blockchain');
+    console.error('[Stellar] Publish error:', error);
+    throw new Error('Failed to publish to Soroban Smart Contract');
   }
 };
 
@@ -117,10 +133,8 @@ const getLedger = async (ledgerSequence) => {
   }
 };
 
-/**
- * Verifies a transaction by comparing its hash/memo to the expected local hash.
- */
 const verifyTransaction = async (txHash, expectedHashHex) => {
+  // We keep this for backward compatibility or simple tx checks
   try {
     const tx = await getTransaction(txHash);
     let memoHex = '';
@@ -134,11 +148,41 @@ const verifyTransaction = async (txHash, expectedHashHex) => {
   }
 };
 
+const verifyProductSoroban = async (productId, expectedHashHex) => {
+  if (!CONTRACT_ID) return false;
+  try {
+    const contract = new StellarSdk.Contract(CONTRACT_ID);
+    const args = [nativeToScVal(productId, { type: 'string' })];
+    
+    const account = new StellarSdk.Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0"); 
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: "100", networkPassphrase: StellarSdk.Networks.TESTNET })
+      .addOperation(contract.call("get_product", ...args))
+      .setTimeout(30)
+      .build();
+      
+    const sim = await rpcServer.simulateTransaction(tx);
+    if (sim.resultError) return false;
+    
+    if (sim.result && sim.result.retval) {
+      const productState = scValToNative(sim.result.retval);
+      // productState is a JS object representing the rust Struct Product
+      // productState.hash should be a string buffer or string
+      const onChainHash = productState.hash?.toString();
+      return onChainHash === expectedHashHex;
+    }
+    return false;
+  } catch (error) {
+    console.error(`[Stellar] Soroban Verify error for product ${productId}:`, error);
+    return false;
+  }
+};
+
 module.exports = {
   initializeStellarAccount,
   publishProductToBlockchain,
   registerProduct,
   verifyTransaction,
+  verifyProductSoroban,
   getTransaction,
   getLedger
 };

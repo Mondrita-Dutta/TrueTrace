@@ -55,33 +55,32 @@ router.get('/verify/:productId', async (req, res) => {
     const sortedData = JSON.stringify(productDataPayload, Object.keys(productDataPayload).sort());
     const localHash = crypto.createHash('sha256').update(sortedData).digest('hex');
 
-    // 2. Fetch the transaction memo from Stellar Horizon
+    // 2. Query Soroban Smart Contract instead of Horizon Memo
+    let isAuthentic = false;
+    let memoHex = '';
+    
+    // We can also fetch the transaction info to keep the tx timestamp
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     let txData;
     
     try {
+      // Still fetch Horizon for the timestamp and ledger of the original tx
       const horizonResponse = await fetch(`https://horizon-testnet.stellar.org/transactions/${product.transactionHash}`, { signal: controller.signal });
       clearTimeout(timeoutId);
-      
-      if (!horizonResponse.ok) {
-        return res.status(500).json({ success: false, message: 'Failed to verify transaction on Stellar network.' });
+      if (horizonResponse.ok) {
+        txData = await horizonResponse.json();
       }
       
-      txData = await horizonResponse.json();
+      // Now verify hash via Soroban contract
+      isAuthentic = await stellarService.verifyProductSoroban(product.productId, localHash);
+      if (isAuthentic) {
+        memoHex = localHash; // just to sync up UI which expects stellarHash
+      }
     } catch (fetchError) {
       clearTimeout(timeoutId);
       return res.status(503).json({ success: false, message: 'Blockchain network timeout or unavailable.' });
     }
-
-    const memoBase64 = txData.memo; // Memo hash is base64 encoded by default in Horizon response
-    let memoHex = '';
-    
-    if (memoBase64) {
-      memoHex = Buffer.from(memoBase64, 'base64').toString('hex');
-    }
-
-    const isAuthentic = (localHash === memoHex);
 
     // Log the scan asynchronously
     try {
@@ -104,8 +103,8 @@ router.get('/verify/:productId', async (req, res) => {
         isAuthentic,
         blockchain: {
           txHash: product.transactionHash,
-          ledger: product.ledgerNumber,
-          timestamp: txData.created_at,
+          ledger: product.ledgerNumber || (txData ? txData.ledger : 'Unknown'),
+          timestamp: txData ? txData.created_at : product.blockchainTimestamp,
           localHash,
           stellarHash: memoHex,
           network: product.network

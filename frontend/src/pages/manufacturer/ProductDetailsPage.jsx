@@ -5,6 +5,9 @@ import { FiChevronLeft, FiPackage, FiMaximize, FiShield, FiHash, FiClock, FiInfo
 import { toast } from 'react-toastify';
 import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import productService from '../../services/productService';
+import { connectFreighter, signXLMTransaction } from '../../utils/freighterUtils';
+import { buildRegisterProductTx, submitSorobanTransaction } from '../../services/stellarService';
+
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -75,20 +78,38 @@ const ProductDetailsPage = () => {
   const handlePublishToBlockchain = async () => {
     try {
       setIsPublishing(true);
-      const res = await productService.publishToBlockchain(product._id);
-      toast.success('Successfully published to Stellar Blockchain!');
-      setProduct(res.data); // Update with new Tx Hash and status
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to publish to blockchain');
-      // If it says it's already verified, refresh the page state!
-      if (err.response?.status === 400) {
-        const fresh = await productService.getProductById(product._id);
-        setProduct(fresh.data);
+      
+      toast.info('Connecting to Freighter wallet...');
+      const address = await connectFreighter();
+      if (!address) throw new Error("Wallet not connected");
+
+      toast.info('Preparing Soroban Smart Contract transaction...');
+      const xdr = await buildRegisterProductTx(address, product.productId, product.blockchainHash);
+      
+      toast.info('Please approve the transaction in your wallet...');
+      const signedXdr = await signXLMTransaction(xdr);
+
+      toast.info('Submitting to Stellar Testnet (Soroban)...');
+      const submitRes = await submitSorobanTransaction(signedXdr);
+
+      if (!submitRes.success) {
+        throw new Error(submitRes.error || "Transaction failed");
       }
+
+      toast.success('Successfully registered on Soroban Smart Contract!');
+      
+      // Update backend
+      const res = await productService.markAsPublishedSoroban(product._id, submitRes.hash);
+      setProduct(res.data);
+      
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || err.response?.data?.message || 'Failed to publish to Soroban');
     } finally {
       setIsPublishing(false);
     }
   };
+
 
   if (loading) {
     return (

@@ -124,7 +124,7 @@ const GenerateQRPage = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {batchProducts.map(p => (
                       <div key={p._id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-800 flex flex-col items-center text-center shadow-sm">
-                        <img src={`http://localhost:5000${p.qrImageUrl}`} alt="QR Code" className="w-24 h-24 mb-3" />
+                        <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${p.qrImageUrl}`} alt="QR Code" className="w-24 h-24 mb-3" />
                         <p className="text-xs font-bold text-slate-900 dark:text-white truncate w-full">{p.productName}</p>
                         <p className="text-[10px] text-slate-500 truncate w-full">Batch: {p.batchNumber}</p>
                         <p className="text-[10px] text-slate-500 font-mono mt-1">{p.serialNumber}</p>
@@ -157,7 +157,7 @@ const GenerateQRPage = () => {
         <div className="grid grid-cols-4 gap-4 w-full bg-white print:bg-white">
           {batchProducts.map(p => (
             <div key={p._id} className="border border-black p-2 flex flex-col items-center text-center bg-white print:bg-white" style={{ breakInside: 'avoid' }}>
-              <img src={`http://localhost:5000${p.qrImageUrl}`} alt="QR Code" className="w-32 h-32 mb-1 bg-white" />
+              <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${p.qrImageUrl}`} alt="QR Code" className="w-32 h-32 mb-1 bg-white" />
               <p className="text-sm font-bold text-black m-0 leading-tight">{p.productName}</p>
               <p className="text-xs text-black m-0 leading-tight">Batch: {p.batchNumber}</p>
               <p className="text-xs text-black font-mono m-0 leading-tight">{p.serialNumber}</p>

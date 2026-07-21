@@ -292,10 +292,10 @@ const ProductRegistrationPage = () => {
                 <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
                   <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-3">Anti-Counterfeit QR</p>
                   <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
-                    <img src={`http://localhost:5000${successData.qrImageUrl}`} className="w-32 h-32" alt="QR" />
+                    <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${successData.qrImageUrl}`} className="w-32 h-32" alt="QR" />
                   </div>
                   <div className="flex gap-2">
-                    <a href={`http://localhost:5000${successData.qrImageUrl}`} download={`QR-${successData.productId}.png`} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm"><FiDownload /></a>
+                    <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${successData.qrImageUrl}`} download={`QR-${successData.productId}.png`} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm"><FiDownload /></a>
                   </div>
                 </div>
               </div>

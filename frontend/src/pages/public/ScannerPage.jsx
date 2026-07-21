@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
-import { FiSearch, FiAlertCircle, FiCamera, FiUploadCloud, FiType, FiX } from 'react-icons/fi';
+import { FiSearch, FiAlertCircle, FiCamera, FiUploadCloud, FiType, FiX, FiArrowLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import jsQR from 'jsqr';
 
 const ScannerPage = () => {
   const navigate = useNavigate();
@@ -37,12 +38,16 @@ const ScannerPage = () => {
   }, []);
 
   const stopScanning = async () => {
-    if (html5QrCodeRef.current && isScanning) {
+    if (html5QrCodeRef.current) {
       try {
         await html5QrCodeRef.current.stop();
+      } catch (err) {
+        // Ignore errors if it was already stopped
+      }
+      try {
         html5QrCodeRef.current.clear();
       } catch (err) {
-        console.warn("Failed to stop scanner", err);
+        // Ignore
       }
       setIsScanning(false);
     }
@@ -104,15 +109,43 @@ const ScannerPage = () => {
   // File Upload Handlers
   const handleFileScan = async (file) => {
     if (!file) return;
-    if (!html5QrCodeRef.current) return;
-    
     setError('');
-    try {
-      const decodedText = await html5QrCodeRef.current.scanFile(file, true);
-      handleSuccessfulScan(decodedText);
-    } catch (err) {
-      setError("No QR code found in the image. Please try a different image.");
-    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0, img.width, img.height);
+        
+        try {
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code && code.data) {
+            handleSuccessfulScan(code.data);
+            return;
+          }
+        } catch (e) {
+          console.error("jsQR error:", e);
+        }
+
+        // Fallback to html5-qrcode
+        if (html5QrCodeRef.current) {
+          try {
+            const decodedText = await html5QrCodeRef.current.scanFile(file, true);
+            handleSuccessfulScan(decodedText);
+          } catch (err) {
+            setError("No QR code found in the image. Please try a different image.");
+          }
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const onFileDrop = (e) => {
@@ -133,6 +166,15 @@ const ScannerPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
+        <div className="mb-6">
+          <button 
+            onClick={() => navigate('/verify')}
+            className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-medium"
+          >
+            <FiArrowLeft /> Go Back
+          </button>
+        </div>
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -178,14 +220,18 @@ const ScannerPage = () => {
           <div className="p-6">
             {/* Camera Tab Content */}
             <div className={activeTab === 'camera' ? 'block' : 'hidden'}>
-              <div className="mb-4">
-                <div id="reader" className={`w-full mx-auto overflow-hidden rounded-2xl bg-black/5 dark:bg-black/20 [&_video]:rounded-2xl [&_video]:object-cover ${!isScanning ? 'h-64 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600' : ''}`}>
+              <div className="mb-4 relative">
+                <div className={`w-full mx-auto overflow-hidden rounded-2xl bg-black/5 dark:bg-black/20 [&_video]:rounded-2xl [&_video]:object-cover ${!isScanning ? 'h-64 border-2 border-dashed border-slate-300 dark:border-slate-600' : ''}`}>
+                  <div id="reader" className="w-full"></div>
+                  
                   {!isScanning && (
-                    <div className="text-center p-4">
-                      <FiCamera className="w-12 h-12 mx-auto text-slate-400 mb-2" />
-                      <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        {hasCameras ? 'Camera is ready' : 'No camera detected'}
-                      </p>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center p-4">
+                        <FiCamera className="w-12 h-12 mx-auto text-slate-400 mb-2" />
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">
+                          {hasCameras ? 'Camera is ready' : 'No camera detected'}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

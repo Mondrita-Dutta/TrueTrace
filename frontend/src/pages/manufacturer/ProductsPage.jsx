@@ -211,7 +211,7 @@ const ProductsPage = () => {
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600 flex items-center justify-center shrink-0">
             {product.productImage ? (
-              <img src={`http://localhost:5000${product.productImage}`} alt={product.productName} className="w-full h-full object-cover" loading="lazy" />
+              <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.productImage}`} alt={product.productName} className="w-full h-full object-cover" loading="lazy" />
             ) : (
               <FiBox className="w-6 h-6 text-slate-400" />
             )}
@@ -237,7 +237,7 @@ const ProductsPage = () => {
       <td className="px-6 py-4 text-center">
         {product.qrImageUrl ? (
           <div className="inline-block p-1 bg-white border border-slate-200 rounded-lg shadow-sm group-hover:border-primary transition-colors">
-            <img src={`http://localhost:5000${product.qrImageUrl}`} alt="QR" className="w-8 h-8" />
+            <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`} alt="QR" className="w-8 h-8" />
           </div>
         ) : (
           <span className="text-slate-400">-</span>
@@ -246,7 +246,7 @@ const ProductsPage = () => {
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1">
           {product.qrImageUrl && (
-            <a href={`http://localhost:5000${product.qrImageUrl}`} download={`QR-${product.productId}.png`} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors" title="Download QR">
+            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`} download={`QR-${product.productId}.png`} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors" title="Download QR">
               <FiDownload />
             </a>
           )}

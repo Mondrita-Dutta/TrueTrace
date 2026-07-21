@@ -47,7 +47,7 @@ const ProductDetailsPage = () => {
         <head><title>Print QR Code - ${product.productId}</title></head>
         <body style="text-align: center; font-family: sans-serif; padding: 50px;">
           <h2>Product ID: ${product.productId}</h2>
-          <img src="http://localhost:5000${product.qrImageUrl}" style="width: 300px; height: 300px; margin: 20px 0;" />
+          <img src="${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}" style="width: 300px; height: 300px; margin: 20px 0;" />
           <p>${product.productName} by ${product.brandName}</p>
           <script>window.onload = function() { window.print(); window.close(); }</script>
         </body>
@@ -59,7 +59,7 @@ const ProductDetailsPage = () => {
   const handleDownloadQR = async () => {
     if (!product?.qrImageUrl) return;
     try {
-      const response = await fetch(`http://localhost:5000${product.qrImageUrl}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -159,7 +159,7 @@ const ProductDetailsPage = () => {
               <div className="aspect-square rounded-3xl border-4 border-white dark:border-slate-700 shadow-lg overflow-hidden bg-slate-50 dark:bg-slate-900 flex items-center justify-center relative group">
                 {product.productImage ? (
                   <img 
-                    src={`http://localhost:5000${product.productImage}`} 
+                    src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.productImage}`} 
                     alt={product.productName}
                     className="w-full h-full object-cover"
                   />
@@ -181,7 +181,7 @@ const ProductDetailsPage = () => {
                 {product.qrImageUrl ? (
                   <>
                     <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm mb-4">
-                      <img src={`http://localhost:5000${product.qrImageUrl}`} alt="QR Code" className="w-40 h-40" />
+                      <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`} alt="QR Code" className="w-40 h-40" />
                     </div>
                     <div className="flex w-full gap-2">
                       <button 

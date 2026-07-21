@@ -259,7 +259,7 @@ const VerificationPortal = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-24 h-24 rounded-2xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-600">
                     {result.data.product.productImage ? (
-                      <img src={`http://localhost:5000${result.data.product.productImage}`} crossOrigin="anonymous" alt="Product" className="w-full h-full object-cover" />
+                      <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${result.data.product.productImage}`} crossOrigin="anonymous" alt="Product" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400"><FiBox className="w-8 h-8" /></div>
                     )}

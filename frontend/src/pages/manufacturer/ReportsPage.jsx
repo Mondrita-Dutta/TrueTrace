@@ -238,7 +238,7 @@ const ReportsPage = () => {
                       {selectedReport.imageUrl ? (
                         <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                           <img 
-                            src={`http://localhost:5000${selectedReport.imageUrl}`} 
+                            src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${selectedReport.imageUrl}`} 
                             alt="Counterfeit Evidence" 
                             className="w-full h-auto object-contain max-h-60"
                             onError={(e) => {

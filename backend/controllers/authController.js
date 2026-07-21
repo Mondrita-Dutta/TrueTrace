@@ -157,6 +157,37 @@ const getMe = async (req, res) => {
   }
 };
 
+// @desc    Change user password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.error('Please provide current and new password', 400);
+  }
+
+  try {
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.error('User not found', 404);
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.error('Incorrect current password', 401);
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.success(null, 'Password updated successfully');
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.error('Server error during password change', 500);
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
@@ -305,4 +336,7 @@ const walletLogin = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updateProfile, walletRegister, walletLogin };
+module.exports = { register, login, getMe, updateProfile, walletRegister,
+  walletLogin,
+  changePassword
+};

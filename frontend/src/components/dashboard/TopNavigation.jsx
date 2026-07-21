@@ -4,10 +4,12 @@ import { FiSearch, FiBell, FiMenu, FiMoon, FiSun, FiUser, FiSettings, FiHelpCirc
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useSearch } from '../../context/SearchContext';
 
 const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = React.useRef(null);
 
@@ -65,6 +67,8 @@ const TopNavigation = ({ toggleSidebar, title = "Dashboard" }) => {
           <input 
             type="text" 
             placeholder="Search products, reports..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-full py-2 pl-10 pr-4 text-sm transition-all outline-none text-slate-700 dark:text-slate-200 placeholder-slate-400"
           />
         </div>

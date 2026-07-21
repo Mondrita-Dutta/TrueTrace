@@ -10,6 +10,7 @@ import EmptyState from '../../components/dashboard/EmptyState';
 import { TableSkeleton } from '../../components/dashboard/LoadingSkeleton';
 import ExportButtons from '../../components/ui/ExportButtons';
 import { useAuth } from '../../context/AuthContext';
+import { useSearch } from '../../context/SearchContext';
 
 import productService from '../../services/productService';
 import DeleteConfirmModal from '../../components/dashboard/products/DeleteConfirmModal';
@@ -24,7 +25,9 @@ const ProductsPage = () => {
 
   // Pagination, Filters, Sorting
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery: globalSearchQuery } = useSearch();
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const searchQuery = globalSearchQuery || localSearchQuery;
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');

@@ -62,3 +62,24 @@ exports.getReports = async (req, res) => {
     return res.error('Failed to fetch reports', 500);
   }
 };
+
+exports.updateReportStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const manufacturerId = req.user.id;
+
+    const report = await Report.findOne({ _id: id, manufacturerId });
+    if (!report) {
+      return res.error('Report not found', 404);
+    }
+
+    report.status = status;
+    await report.save();
+
+    return res.success(report, 'Report status updated');
+  } catch (error) {
+    console.error('Update report status error:', error);
+    return res.error('Failed to update report status', 500);
+  }
+};

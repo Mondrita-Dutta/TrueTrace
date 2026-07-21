@@ -114,30 +114,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy Backend (Placeholder via SSH)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            echo "Deploying backend..."
-            # cd /path/to/backend
-            # git pull origin main
-            # npm install
-            # pm2 restart server
+      - name: Deploy Backend (Placeholder)
+        run: |
+          echo "Deploying backend..."
+          echo "Please configure DEPLOY_HOST, DEPLOY_USER, and DEPLOY_SSH_KEY secrets to enable SSH deployment."
             
-      - name: Deploy Frontend (Placeholder via SSH)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            echo "Deploying frontend..."
-            # cd /path/to/frontend
-            # git pull origin main
-            # npm install
-            # npm run build
-            # cp -r dist/* /var/www/html/
+      - name: Deploy Frontend (Placeholder)
+        run: |
+          echo "Deploying frontend..."
+          echo "Please configure DEPLOY_HOST, DEPLOY_USER, and DEPLOY_SSH_KEY secrets to enable SSH deployment."
 

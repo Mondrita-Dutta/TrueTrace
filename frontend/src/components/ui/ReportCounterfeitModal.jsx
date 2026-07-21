@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiAlertTriangle, FiUploadCloud } from 'react-icons/fi';
 import Button from './Button';
 import publicService from '../../services/publicService';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const ReportCounterfeitModal = ({ isOpen, onClose, productId, productName }) => {
   const [formData, setFormData] = useState({

@@ -5,9 +5,12 @@ echo "Building the smart contract..."
 cd blockchain
 cargo build --target wasm32-unknown-unknown --release --locked
 
+echo "Optimizing the smart contract..."
+stellar contract optimize --wasm target/wasm32-unknown-unknown/release/truetrace_contract.wasm
+
 echo "Deploying the smart contract to Testnet..."
 # Ensure stellar-cli is available (should be installed by GitHub Actions step)
-CONTRACT_ID=$(stellar contract deploy --wasm target/wasm32-unknown-unknown/release/truetrace_contract.wasm --network testnet --source-account "$STELLAR_SECRET_KEY")
+CONTRACT_ID=$(stellar contract deploy --wasm target/wasm32-unknown-unknown/release/truetrace_contract.optimized.wasm --network testnet --source-account "$STELLAR_SECRET_KEY")
 
 echo "Deployed Contract ID: $CONTRACT_ID"
 

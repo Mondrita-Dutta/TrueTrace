@@ -35,7 +35,7 @@ jobs:
         run: npm test
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.79.0
         with:
           targets: wasm32-unknown-unknown
 
@@ -64,7 +64,7 @@ jobs:
         run: npm run build
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.79.0
         with:
           targets: wasm32-unknown-unknown
 
@@ -83,7 +83,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.79.0
         with:
           targets: wasm32-unknown-unknown
 

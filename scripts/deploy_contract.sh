@@ -7,7 +7,7 @@ cargo build --target wasm32-unknown-unknown --release --locked
 
 echo "Deploying the smart contract to Testnet..."
 # Ensure stellar-cli is available (should be installed by GitHub Actions step)
-CONTRACT_ID=$(stellar contract deploy --wasm target/wasm32-unknown-unknown/release/true_trace_contract.wasm --network testnet --source-account "$STELLAR_SECRET_KEY")
+CONTRACT_ID=$(stellar contract deploy --wasm target/wasm32-unknown-unknown/release/truetrace_contract.wasm --network testnet --source-account "$STELLAR_SECRET_KEY")
 
 echo "Deployed Contract ID: $CONTRACT_ID"
 

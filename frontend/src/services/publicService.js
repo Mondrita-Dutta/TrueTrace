@@ -13,6 +13,14 @@ const publicService = {
   submitContactForm: async (data) => {
     const res = await publicApi.post('/contact', data);
     return res.data;
+  },
+  reportProduct: async (formData) => {
+    const res = await publicApi.post('/report', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return res.data;
   }
 };
 

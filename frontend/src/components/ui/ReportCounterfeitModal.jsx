@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiAlertTriangle, FiUploadCloud } from 'react-icons/fi';
 import Button from './Button';
+import publicService from '../../services/publicService';
+import toast from 'react-hot-toast';
 
 const ReportCounterfeitModal = ({ isOpen, onClose, productId, productName }) => {
   const [formData, setFormData] = useState({
@@ -34,13 +36,10 @@ const ReportCounterfeitModal = ({ isOpen, onClose, productId, productName }) => 
         submitData.append('reportImage', imageFile);
       }
 
-      const response = await fetch('/api/public/report', {
-        method: 'POST',
-        body: submitData
-      });
-      const data = await response.json();
+      const data = await publicService.reportProduct(submitData);
       
       if (data.success) {
+        toast.success('Report submitted successfully');
         setSuccess(true);
         setTimeout(() => {
           onClose();
@@ -48,9 +47,12 @@ const ReportCounterfeitModal = ({ isOpen, onClose, productId, productName }) => 
           setFormData({ reason: '', description: '', location: '', email: '' });
           setImageFile(null);
         }, 3000);
+      } else {
+        toast.error(data.message || 'Failed to submit report');
       }
     } catch (err) {
       console.error(err);
+      toast.error(err.response?.data?.message || err.message || 'An error occurred while submitting the report');
     } finally {
       setIsSubmitting(false);
     }

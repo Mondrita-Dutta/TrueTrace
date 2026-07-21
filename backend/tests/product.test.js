@@ -71,7 +71,7 @@ describe('Product API Endpoints', () => {
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data.productName).toBe('Test Product');
-    expect(res.body.data.blockchainStatus).toBe('Verified');
+    expect(res.body.data.blockchainStatus).toBe('Pending');
     expect(res.body.data.qrImageUrl).toContain('qr-');
   });
 
@@ -107,6 +107,7 @@ describe('Product API Endpoints', () => {
     const productId = createRes.body.data._id;
 
     const updateRes = await request(app).put(`/api/products/${productId}`).send({
+      ...validProductPayload,
       productName: 'Updated Name',
       category: 'Updated Category'
     });

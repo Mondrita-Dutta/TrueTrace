@@ -200,6 +200,11 @@ const VerificationPortal = () => {
             <FiXCircle className="w-16 h-16 text-danger mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Verification Failed</h2>
             <p className="text-danger font-medium">{error}</p>
+            <div className="mt-6">
+              <Button variant="danger" onClick={() => setIsReportModalOpen(true)}>
+                <FiAlertTriangle className="mr-2 inline" /> Report Suspicious Product
+              </Button>
+            </div>
           </motion.div>
         )}
 
@@ -391,14 +396,12 @@ const VerificationPortal = () => {
         )}
       </div>
 
-      {result?.data?.product && (
-        <ReportCounterfeitModal 
-          isOpen={isReportModalOpen} 
-          onClose={() => setIsReportModalOpen(false)} 
-          productId={result.data.product.productId}
-          productName={result.data.product.productName}
-        />
-      )}
+      <ReportCounterfeitModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+        productId={result?.data?.product?.productId || searchId}
+        productName={result?.data?.product?.productName || 'Unknown Product'}
+      />
     </div>
   );
 };

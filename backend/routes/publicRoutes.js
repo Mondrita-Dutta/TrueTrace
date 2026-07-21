@@ -132,13 +132,12 @@ router.post('/report', upload.single('reportImage'), async (req, res) => {
     }
 
     const product = await Product.findOne({ productId });
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found.' });
-    }
+    
+    const manufacturerId = product ? product.manufacturerId : null;
 
     const newReport = await Report.create({
       productId,
-      manufacturerId: product.manufacturerId,
+      manufacturerId,
       reason,
       description,
       location,
@@ -147,14 +146,16 @@ router.post('/report', upload.single('reportImage'), async (req, res) => {
       status: 'Open'
     });
 
-    // Send email notification to manufacturer
-    try {
-      const manufacturer = await User.findById(product.manufacturerId);
-      if (manufacturer && manufacturer.email) {
-        await emailService.sendCounterfeitReportEmail(manufacturer.email, newReport, product);
+    // Send email notification to manufacturer only if product exists
+    if (product) {
+      try {
+        const manufacturer = await User.findById(product.manufacturerId);
+        if (manufacturer && manufacturer.email) {
+          await emailService.sendCounterfeitReportEmail(manufacturer.email, newReport, product);
+        }
+      } catch (emailErr) {
+        console.error('Failed to send email notification:', emailErr);
       }
-    } catch (emailErr) {
-      console.error('Failed to send email notification:', emailErr);
     }
 
     return res.status(201).json({

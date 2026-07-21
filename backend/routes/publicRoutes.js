@@ -47,8 +47,8 @@ router.get('/verify/:productId', async (req, res) => {
       productName: product.productName,
       serialNumber: product.serialNumber,
       batchNumber: product.batchNumber,
-      manufacturingDate: product.manufacturingDate ? new Date(product.manufacturingDate).toISOString().split('T')[0] : '',
-      expiryDate: product.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '',
+      manufacturingDate: product.manufacturingDate ? new Date(product.manufacturingDate) : '',
+      expiryDate: product.expiryDate ? new Date(product.expiryDate) : '',
       timestamp: product.blockchainTimestamp ? new Date(product.blockchainTimestamp).toISOString() : new Date(product.createdAt).toISOString()
     };
     

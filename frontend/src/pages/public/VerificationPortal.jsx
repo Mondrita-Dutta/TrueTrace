@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash, FiAlertTriangle, FiCamera } from 'react-icons/fi';
+import { FiSearch, FiShield, FiXCircle, FiCheckCircle, FiBox, FiClock, FiMapPin, FiInfo, FiHash, FiAlertTriangle, FiCamera, FiDownload } from 'react-icons/fi';
 import publicService from '../../services/publicService';
 import Button from '../../components/ui/Button';
 import ReportCounterfeitModal from '../../components/ui/ReportCounterfeitModal';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { toast } from 'react-toastify';
 
 const VerificationPortal = () => {
   const { productId: initialId } = useParams();
@@ -15,6 +18,7 @@ const VerificationPortal = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const certificateRef = useRef(null);
 
   useEffect(() => {
     if (initialId) {
@@ -22,12 +26,87 @@ const VerificationPortal = () => {
     }
   }, [initialId]);
 
+  const downloadCertificate = () => {
+    if (!result || !result.data || !result.data.product) return;
+    
+    const doc = new jsPDF();
+    const product = result.data.product;
+    const blockchain = result.data.blockchain;
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(33, 37, 41);
+    doc.text('TrueTrace Authenticity Certificate', 14, 20);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+    
+    // Status
+    doc.setFontSize(16);
+    if (result.data.isAuthentic) {
+      doc.setTextColor(16, 185, 129); // Tailwind Success Green
+      doc.text('Status: VERIFIED AUTHENTIC', 14, 42);
+    } else if (!result.data.blockchain) {
+      doc.setTextColor(245, 158, 11); // Tailwind Warning Yellow
+      doc.text('Status: PENDING BLOCKCHAIN', 14, 42);
+    } else {
+      doc.setTextColor(239, 68, 68); // Tailwind Danger Red
+      doc.text('Status: FAKE PRODUCT DETECTED', 14, 42);
+    }
+    
+    // Product Details Table
+    autoTable(doc, {
+      startY: 50,
+      head: [['Product Information', 'Details']],
+      body: [
+        ['Product ID', product.productId || 'N/A'],
+        ['Product Name', product.productName || 'N/A'],
+        ['Brand Name', product.brandName || 'N/A'],
+        ['Manufacturer', product.manufacturerName || 'N/A'],
+        ['Batch Number', product.batchNumber || 'N/A'],
+        ['Serial Number', product.serialNumber || 'N/A'],
+        ['Manufacturing Date', product.manufacturingDate ? new Date(product.manufacturingDate).toLocaleDateString() : 'N/A'],
+        ['Expiry Date', product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : 'N/A'],
+        ['Origin', product.countryOfOrigin || 'N/A']
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [15, 23, 42] }, // Dark slate
+    });
+    
+    // Blockchain Details Table
+    if (blockchain) {
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['Cryptographic Proof', 'Data']],
+        body: [
+          ['Transaction Hash', blockchain.txHash || 'N/A'],
+          ['Ledger ID', blockchain.ledger?.toString() || 'N/A'],
+          ['Timestamp', new Date(blockchain.timestamp).toLocaleString() || 'N/A'],
+          ['Hash Verification', result.data.isAuthentic ? 'Match' : 'Mismatch']
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [51, 65, 85] },
+        columnStyles: {
+          1: { cellWidth: 120 } // Ensure hash doesn't overflow wildly
+        }
+      });
+    }
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text('This document mathematically proves the authenticity of the product using the Stellar Blockchain.', 14, doc.internal.pageSize.height - 10);
+    
+    doc.save(`TrueTrace_Certificate_${product.productId || 'Product'}.pdf`);
+  };
+
   const handleSearch = async (idToSearch = searchId) => {
     if (!idToSearch.trim()) return;
     
     // Update URL if searching manually
     if (idToSearch !== initialId) {
-      navigate(`/verify/${idToSearch}`, { replace: true });
+      navigate(`/verify/${encodeURIComponent(idToSearch)}`, { replace: true });
     }
 
     try {
@@ -125,8 +204,17 @@ const VerificationPortal = () => {
         )}
 
         {!loading && result && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+          <motion.div ref={certificateRef} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden relative">
             
+            {result.data.isAuthentic && (
+              <button 
+                onClick={downloadCertificate}
+                className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 dark:bg-slate-900/40 dark:hover:bg-slate-900/60 text-slate-800 dark:text-white rounded-lg text-sm font-medium transition-colors backdrop-blur-sm border border-white/30 dark:border-slate-700/50"
+                title="Download Certificate"
+              >
+                <FiDownload /> Download
+              </button>
+            )}
             {/* Status Header */}
             <div className={`p-8 text-center ${result.data.isAuthentic ? 'bg-gradient-to-b from-success/20 to-transparent' : (!result.data.blockchain ? 'bg-gradient-to-b from-yellow-500/20 to-transparent' : 'bg-gradient-to-b from-danger/20 to-transparent')}`}>
               {result.data.isAuthentic ? (
@@ -166,7 +254,7 @@ const VerificationPortal = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-24 h-24 rounded-2xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-600">
                     {result.data.product.productImage ? (
-                      <img src={`http://localhost:5000${result.data.product.productImage}`} alt="Product" className="w-full h-full object-cover" />
+                      <img src={`http://localhost:5000${result.data.product.productImage}`} crossOrigin="anonymous" alt="Product" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400"><FiBox className="w-8 h-8" /></div>
                     )}

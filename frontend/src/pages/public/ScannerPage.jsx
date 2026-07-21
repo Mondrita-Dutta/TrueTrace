@@ -27,7 +27,7 @@ const ScannerPage = () => {
         } catch (e) {
           // not JSON, keep original
         }
-        navigate(`/verify/${productId}`);
+        navigate(`/verify/${encodeURIComponent(productId)}`);
       },
       (errorMessage) => {
         // Ignore scan errors until success
@@ -46,7 +46,7 @@ const ScannerPage = () => {
   const handleManualSubmit = (e) => {
     e.preventDefault();
     if (manualId.trim()) {
-      navigate(`/verify/${manualId.trim()}`);
+      navigate(`/verify/${encodeURIComponent(manualId.trim())}`);
     } else {
       setError('Please enter a valid Product ID');
     }

@@ -11,7 +11,8 @@ const User = require('../models/User');
 // Mock Auth Middleware to inject a user
 jest.mock('../middlewares/authMiddleware', () => ({
   protect: (req, res, next) => {
-    req.user = { id: new mongoose.Types.ObjectId().toString(), role: 'manufacturer' };
+    // Cannot reference mongoose here because jest.mock is hoisted
+    req.user = { id: '5f8d04b3b54764421b7156d1', role: 'manufacturer' };
     next();
   }
 }));

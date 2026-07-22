@@ -23,6 +23,7 @@ pub struct Product {
 #[contracttype]
 pub enum DataKey {
     Product(String),
+    MetricsContract,
 }
 
 #[contract]
@@ -30,6 +31,14 @@ pub struct TrueTraceContract;
 
 #[contractimpl]
 impl TrueTraceContract {
+    /// Initializes the contract with the address of the metrics contract
+    pub fn init(env: Env, metrics_contract: Address) {
+        if env.storage().instance().has(&DataKey::MetricsContract) {
+            panic!("Already initialized");
+        }
+        env.storage().instance().set(&DataKey::MetricsContract, &metrics_contract);
+    }
+
     /// Registers a new product on the blockchain.
     pub fn register_product(env: Env, id: String, manufacturer: Address, hash: String) {
         manufacturer.require_auth();
@@ -50,6 +59,11 @@ impl TrueTraceContract {
         };
 
         env.storage().persistent().set(&key, &product);
+
+        // Call metrics contract if initialized
+        if let Some(metrics_contract) = env.storage().instance().get::<_, Address>(&DataKey::MetricsContract) {
+            env.invoke_contract::<u32>(&metrics_contract, &symbol_short!("increment"), soroban_sdk::vec![&env]);
+        }
 
         // Emit event
         env.events().publish((symbol_short!("register"), id), product);

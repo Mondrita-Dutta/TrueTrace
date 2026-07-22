@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaShieldAlt, FaQrcode, FaChartLine, FaChevronDown } from 'react-icons/fa';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import SectionTitle from '../../components/ui/SectionTitle';
+import api from '../../services/api';
 
 const LandingPage = () => {
+  const [metricsCount, setMetricsCount] = useState("...");
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await api.get('/public/metrics');
+        if (res.data && res.data.success) {
+          setMetricsCount(res.data.count.toString());
+        }
+      } catch (error) {
+        console.error("Failed to fetch metrics", error);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -65,9 +82,9 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {[
-              { value: "10K+", label: "Products Verified" },
+              { value: metricsCount, label: "Products Secured" },
               { value: "500+", label: "Manufacturers" },
-              { value: "99.9%", label: "Accuracy Rate" }
+              { value: "100%", label: "Blockchain Verification" }
             ].map((stat, idx) => (
               <motion.div 
                 key={idx}

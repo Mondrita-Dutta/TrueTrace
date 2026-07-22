@@ -10,6 +10,19 @@ const upload = require('../config/multerConfig');
 const emailService = require('../services/emailService');
 const ContactMessage = require('../models/ContactMessage');
 
+// @desc    Get global product metrics
+// @route   GET /api/public/metrics
+// @access  Public
+router.get('/metrics', async (req, res) => {
+  try {
+    const count = await stellarService.getMetricsCount();
+    return res.json({ success: true, count });
+  } catch (error) {
+    console.error('Metrics error:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching metrics' });
+  }
+});
+
 // @desc    Verify product via Product ID
 // @route   GET /api/public/verify/:productId
 // @access  Public

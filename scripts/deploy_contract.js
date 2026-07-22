@@ -1,7 +1,6 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const StellarSdk = require('../backend/node_modules/@stellar/stellar-sdk');
 
 const backendEnvPath = path.join(__dirname, '../backend/.env');
@@ -49,7 +48,7 @@ async function getMasterKey() {
 }
 
 async function main() {
-  console.log('Building Soroban Smart Contract...');
+  console.log('Building Soroban Smart Contracts...');
   try {
     execSync('cargo build -j 1 --target wasm32-unknown-unknown --release', { 
       cwd: contractsDir, 
@@ -61,30 +60,58 @@ async function main() {
     process.exit(1);
   }
 
+  // Get the strict secret key
   const secret = await getMasterKey();
   
-  console.log('Deploying to Testnet...');
-  const wasmPath = 'C:\\temp\\truetrace_target\\wasm32-unknown-unknown\\release\\truetrace_contract.optimized.wasm';
-  
+  console.log('Deploying Metrics Contract to Testnet...');
+  const metricsWasmPath = 'C:\\temp\\truetrace_target\\wasm32-unknown-unknown\\release\\metrics_contract.wasm';
+  let metricsContractId = '';
   try {
+    // Optimize metrics contract
+    execSync(`.\\stellar.exe contract optimize --wasm ${metricsWasmPath}`, { cwd: contractsDir, stdio: 'inherit' });
     const output = execSync(
-      `.\\stellar.exe contract deploy --wasm ${wasmPath} --source ${secret} --network testnet`,
+      `.\\stellar.exe contract deploy --wasm C:\\temp\\truetrace_target\\wasm32-unknown-unknown\\release\\metrics_contract.optimized.wasm --source ${secret} --network testnet`,
       { cwd: contractsDir, encoding: 'utf-8' }
     );
-    
-    const contractId = output.trim();
-    console.log(`\nContract deployed successfully!`);
-    console.log(`Contract ID: ${contractId}\n`);
-    
-    updateEnvFile(backendEnvPath, 'SOROBAN_CONTRACT_ID', contractId);
-    updateEnvFile(frontendEnvPath, 'VITE_SOROBAN_CONTRACT_ID', contractId);
-    
+    metricsContractId = output.trim();
+    console.log(`\nMetrics Contract deployed successfully! ID: ${metricsContractId}\n`);
   } catch (error) {
-    console.error('Deployment failed:', error.message);
-    if (error.stdout) console.error('stdout:', error.stdout.toString());
-    if (error.stderr) console.error('stderr:', error.stderr.toString());
+    console.error('Metrics Deployment failed:', error.message);
     process.exit(1);
   }
+
+  console.log('Deploying TrueTrace Contract to Testnet...');
+  const trueTraceWasmPath = 'C:\\temp\\truetrace_target\\wasm32-unknown-unknown\\release\\truetrace_contract.wasm';
+  let trueTraceContractId = '';
+  try {
+    // Optimize truetrace contract
+    execSync(`.\\stellar.exe contract optimize --wasm ${trueTraceWasmPath}`, { cwd: contractsDir, stdio: 'inherit' });
+    const output = execSync(
+      `.\\stellar.exe contract deploy --wasm C:\\temp\\truetrace_target\\wasm32-unknown-unknown\\release\\truetrace_contract.optimized.wasm --source ${secret} --network testnet`,
+      { cwd: contractsDir, encoding: 'utf-8' }
+    );
+    trueTraceContractId = output.trim();
+    console.log(`\nTrueTrace Contract deployed successfully! ID: ${trueTraceContractId}\n`);
+  } catch (error) {
+    console.error('TrueTrace Deployment failed:', error.message);
+    process.exit(1);
+  }
+
+  console.log(`Linking TrueTrace to Metrics Contract...`);
+  try {
+    execSync(
+      `.\\stellar.exe contract invoke --id ${trueTraceContractId} --source ${secret} --network testnet -- init --metrics_contract ${metricsContractId}`,
+      { cwd: contractsDir, stdio: 'inherit' }
+    );
+    console.log(`\nContracts Linked Successfully!\n`);
+  } catch (error) {
+    console.error('Contract linking failed:', error.message);
+    process.exit(1);
+  }
+    
+  updateEnvFile(backendEnvPath, 'SOROBAN_CONTRACT_ID', trueTraceContractId);
+  updateEnvFile(frontendEnvPath, 'VITE_SOROBAN_CONTRACT_ID', trueTraceContractId);
+  updateEnvFile(backendEnvPath, 'METRICS_CONTRACT_ID', metricsContractId);
 }
 
 main().catch(console.error);

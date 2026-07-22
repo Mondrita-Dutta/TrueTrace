@@ -9,12 +9,14 @@ const networkPassphrase = StellarSdk.Networks.TESTNET;
 
 let masterKeypair = null;
 let CONTRACT_ID = null;
+let METRICS_CONTRACT_ID = null;
 
 
 // Initialize the master account (called on server start)
 const initializeStellarAccount = async () => {
   try {
     CONTRACT_ID = process.env.SOROBAN_CONTRACT_ID;
+    METRICS_CONTRACT_ID = process.env.METRICS_CONTRACT_ID;
     if (process.env.STELLAR_SECRET_KEY) {
       masterKeypair = StellarSdk.Keypair.fromSecret(process.env.STELLAR_SECRET_KEY);
       console.log(`[Stellar] Loaded Master Account: ${masterKeypair.publicKey()}`);
@@ -177,6 +179,32 @@ const verifyProductSoroban = async (productId, expectedHashHex) => {
   }
 };
 
+const getMetricsCount = async () => {
+  if (!METRICS_CONTRACT_ID) return 0;
+  try {
+    const contract = new StellarSdk.Contract(METRICS_CONTRACT_ID);
+    
+    // Simulate transaction with dummy account
+    const account = new StellarSdk.Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0"); 
+    const tx = new StellarSdk.TransactionBuilder(account, { fee: "100", networkPassphrase: StellarSdk.Networks.TESTNET })
+      .addOperation(contract.call("get_count"))
+      .setTimeout(30)
+      .build();
+      
+    const sim = await rpcServer.simulateTransaction(tx);
+    if (sim.resultError) return 0;
+    
+    if (sim.result && sim.result.retval) {
+      const count = scValToNative(sim.result.retval);
+      return Number(count);
+    }
+    return 0;
+  } catch (error) {
+    console.error(`[Stellar] Failed to fetch metrics count:`, error);
+    return 0;
+  }
+};
+
 module.exports = {
   initializeStellarAccount,
   publishProductToBlockchain,
@@ -184,5 +212,6 @@ module.exports = {
   verifyTransaction,
   verifyProductSoroban,
   getTransaction,
-  getLedger
+  getLedger,
+  getMetricsCount
 };

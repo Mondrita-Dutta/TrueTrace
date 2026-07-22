@@ -224,6 +224,7 @@ cd scripts
 # Run the automated deployment script
 # This will build, deploy, and link both the Metrics and TrueTrace contracts
 node deploy_contract.js
+```
 
 ---
 

@@ -107,17 +107,19 @@ sequenceDiagram
 
 ```text
 TrueTrace/
-├── backend/                    # Express.js Node API & MongoDB Models
-│   ├── models/                 # Mongoose schemas (ScanHistory, ProductTemplate)
-│   ├── routes/                 # API Endpoints (Admin, Verification)
-│   └── server.js               # Main Backend Entrypoint
-├── blockchain/                 # Soroban Smart Contracts Workspace
-│   ├── contracts/truetrace/    # Core Product Registry Contract in Rust
-│   └── Cargo.toml              # Rust Workspace configuration
-├── frontend/                   # React Frontend Application (Vite)
-│   ├── src/pages/              # Manufacturer Dashboards & Public Views
-│   └── package.json            # NPM Dependencies
-└── README.md                   # Project Documentation
+├── backend/                  # Express.js Node API & MongoDB Models
+│   ├── models/               # Mongoose schemas (ScanHistory, Product, etc)
+│   ├── routes/               # API Endpoints (Admin, Verification, Public)
+│   └── server.js             # Main Backend Entrypoint
+├── blockchain/               # Soroban Smart Contracts Workspace
+│   ├── contracts/truetrace/  # Core Product Registry Contract in Rust
+│   ├── contracts/metrics/    # Analytics & Counter Contract in Rust (Inter-Contract)
+│   └── Cargo.toml            # Rust Workspace configuration
+├── frontend/                 # React Frontend Application (Vite)
+│   ├── src/pages/            # Manufacturer Dashboards & Public Views
+│   └── package.json          # NPM Dependencies
+└── README.md                 # Project Documentation
+
 ```
 
 ---
@@ -173,11 +175,12 @@ The Soroban smart contract is deployed on the Stellar Testnet:
 - **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CBI5GWR2SV2LYLM2COSMLY7NGCLIJGFAS3J65XMQW67MBPKD3MRTW4MN
 - **Metrics Contract ID**: `CCYJY3SFYNBXQ7BXPUAFCAMLJSWEX3XFASOSIMM5UGSOWYCTC7WXKPRG`
 - **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CCYJY3SFYNBXQ7BXPUAFCAMLJSWEX3XFASOSIMM5UGSOWYCTC7WXKPRG
+  
 **Recent Transactions:**
 - **Metrics Contract Deployment ID**: db5cd95b5ab03ac969c001bc660c5f5d1b26258ece58b47f88879741e4a3eb46
 - **Metrics Contract Deployment Link**:https://stellar.expert/explorer/testnet/tx/16081774895456256
 - **Core Cross-Contract Initialization**: 816be8b5e64172080397571b75ae4858bc21f346583369be8bda6e50054c12ad
-- **Core Cross-Contract Initialization**:https://stellar.expert/explorer/testnet/tx/16081783485415424
+- **Core Cross-Contract Initialization Link**:https://stellar.expert/explorer/testnet/tx/16081783485415424
 ---
 ## 🛡️ CI/CD Pipeline & Deployment
 
@@ -212,11 +215,15 @@ npm run dev
 ```
 
 ### Smart Contract Deployment (Stellar Testnet)
+Smart Contract Deployment (Stellar Testnet)
+
 ```bash
-cd blockchain
-stellar contract build
-# Follow the deployment scripts in deploy_contract.sh to push to testnet
-```
+# Navigate to the scripts directory
+cd scripts
+
+# Run the automated deployment script
+# This will build, deploy, and link both the Metrics and TrueTrace contracts
+node deploy_contract.js
 
 ---
 

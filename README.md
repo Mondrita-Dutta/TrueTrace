@@ -4,11 +4,12 @@
 
 **Verify Every Product. Trust Every Purchase. Blockchain-powered supply chain authenticity built on the Stellar network using Soroban Smart Contracts.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Stellar](https://img.shields.io/badge/Network-Stellar_Testnet-black)](https://stellar.org/)
 [![Soroban](https://img.shields.io/badge/Smart_Contracts-Soroban-orange)](https://soroban.stellar.org/)
 
-  <h3>🚀 Live Production Deployment: <a href="https://truetrace-demo.vercel.app/">https://truetrace-demo.vercel.app/</a></h3>
+<img width="1338" height="768" alt="image" src="https://github.com/user-attachments/assets/2ebf52e9-30f8-4763-a288-33bb76f3961a" /> 
+
+  <h3>🚀 Live Production Deployment: https://true-trace-phi.vercel.app/</h3>
 
 *"TrueTrace is a Web3 supply chain verification platform that allows manufacturers to register products securely on the Stellar blockchain, providing consumers with an immutable source of truth to verify the authenticity and lifecycle of their purchases."*
 
@@ -96,15 +97,51 @@ TrueTrace/
 
 ### 🌟 Manufacturer Dashboard
 *Manufacturers can track all minted products, total authentic scans, and potential counterfeits in one clean dashboard.*
-`[INSERT SCREENSHOT: Manufacturer Dashboard showing metrics and product table]`
+<img width="1348" height="768" alt="image" src="https://github.com/user-attachments/assets/023c38a5-fd6c-43f8-9667-ff7a9e9e3d1a" />
+<img width="1351" height="757" alt="image" src="https://github.com/user-attachments/assets/fcc31f48-f7a2-4831-b529-12e4b9719758" />
+
 
 ### 🔍 Consumer QR Verification
 *Consumers scan the physical QR code to immediately see the product's on-chain provenance and verification status.*
-`[INSERT SCREENSHOT: Mobile Verification View with Success/Counterfeit alert]`
+<img width="1099" height="768" alt="image" src="https://github.com/user-attachments/assets/f156adce-ca65-42de-a300-1be591494980" />
+<img width="1322" height="525" alt="image" src="https://github.com/user-attachments/assets/9932462f-e94b-4d67-b07f-ccdb58caf59b" />
+
+
 
 ### 📊 Scan History Analytics
 *Detailed reports on where and when products are being scanned.*
-`[INSERT SCREENSHOT: Scan History location mapping]`
+<img width="1352" height="768" alt="image" src="https://github.com/user-attachments/assets/2c92b589-7652-47df-a20f-0aea7a398602" />
+
+
+### 📊 Switch Dark & light theme 
+<img width="1355" height="767" alt="image" src="https://github.com/user-attachments/assets/e0b69fd4-3988-422f-8f4f-82544b42df8c" />
+
+
+---
+
+# Screenshots
+
+
+### CI/CD Pipeline Running
+<img width="1355" height="761" alt="image" src="https://github.com/user-attachments/assets/122a3531-0097-4fde-a126-aeeb7800e65e" />
+
+### Mobile UI Screenshot 
+<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/517db587-379f-4b1c-9b79-b5e5e38e8606" />
+<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/07b8726b-92e3-4ae6-af37-f4c7b6ac625b" />
+<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/c11cbbd7-8d04-4179-af38-ff8fb7efbebf" />
+<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/82fd26c2-964b-4b25-9af1-630ab4b9d9c5" />
+
+### Test case 
+<img width="1114" height="675" alt="image" src="https://github.com/user-attachments/assets/6c509a0b-9427-4cb1-992a-5e17c2f3be42" />
+<img width="870" height="470" alt="image" src="https://github.com/user-attachments/assets/a76080d0-1034-4c16-a98f-171095061d66" />
+
+---
+## 🌐 Deployed Smart Contract (Level 2 Testnet Proof)
+
+The Soroban smart contract is deployed on the Stellar Testnet:
+
+- **Contract ID**: `CD6YFB6S63MZQRGOUGHMSZ3FLDKLHFEEZ5FIQCDG3FZ2SV5AUTFGJXE2`
+- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CD6YFB6S63MZQRGOUGHMSZ3FLDKLHFEEZ5FIQCDG3FZ2SV5AUTFGJXE2
 
 ---
 
@@ -149,13 +186,4 @@ TrueTrace is built with production in mind.
 
 ---
 
-## 🤝 Contributing
-Contributions are welcome! Please ensure that any feature additions are accompanied by relevant tests.
-1. Fork the repo.
-2. Create a feature branch (`git checkout -b feature/new-idea`).
-3. Commit your changes (`git commit -m 'feat: added new idea'`).
-4. Push to the branch (`git push origin feature/new-idea`).
-5. Open a Pull Request.
 
-## License
-This project is licensed under the **MIT License**.

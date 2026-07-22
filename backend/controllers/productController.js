@@ -408,9 +408,6 @@ exports.markAsPublishedSoroban = async (req, res) => {
     product.transactionHash = txHash;
     product.network = 'Stellar Testnet (Soroban)';
     product.status = 'Verified';
-    
-    // We don't have a specific ledger number initially unless we query the RPC
-    // product.ledgerNumber = ???
 
     const updatedProduct = await product.save();
 
@@ -418,6 +415,41 @@ exports.markAsPublishedSoroban = async (req, res) => {
   } catch (error) {
     console.error('Mark as published Soroban error:', error);
     return res.error(error.message || 'Failed to mark as published', 500);
+  }
+};
+
+// @desc    Mark a batch of products as published on Soroban
+// @route   POST /api/products/blockchain/batch/soroban
+// @access  Private (Manufacturer)
+exports.markBatchAsPublishedSoroban = async (req, res) => {
+  try {
+    const { ids, txHash } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.error('No product IDs provided', 400);
+    }
+    if (!txHash) {
+      return res.error('Transaction hash is required', 400);
+    }
+
+    const result = await Product.updateMany(
+      { _id: { $in: ids }, manufacturerId: req.user.id },
+      { 
+        $set: {
+          blockchainStatus: 'Verified',
+          transactionHash: txHash,
+          network: 'Stellar Testnet (Soroban)',
+          status: 'Verified'
+        }
+      }
+    );
+
+    return res.success(
+      { updatedCount: result.modifiedCount }, 
+      `Successfully marked ${result.modifiedCount} products as published to Soroban Smart Contract`
+    );
+  } catch (error) {
+    console.error('Mark batch as published Soroban error:', error);
+    return res.error(error.message || 'Failed to mark batch as published', 500);
   }
 };
 

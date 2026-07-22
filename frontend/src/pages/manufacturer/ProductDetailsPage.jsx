@@ -7,7 +7,7 @@ import Breadcrumbs from '../../components/dashboard/Breadcrumbs';
 import productService from '../../services/productService';
 import { connectFreighter, signXLMTransaction } from '../../utils/freighterUtils';
 import { buildRegisterProductTx, submitSorobanTransaction } from '../../services/stellarService';
-
+import { useAuth } from '../../context/AuthContext';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -15,6 +15,7 @@ const ProductDetailsPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -82,6 +83,11 @@ const ProductDetailsPage = () => {
       toast.info('Connecting to Freighter wallet...');
       const address = await connectFreighter();
       if (!address) throw new Error("Wallet not connected");
+
+      // Verify the connected wallet matches the registered wallet
+      if (user?.walletAddress && address !== user.walletAddress) {
+        throw new Error(`Please connect with your registered wallet address: ${user.walletAddress}`);
+      }
 
       toast.info('Preparing Soroban Smart Contract transaction...');
       const xdr = await buildRegisterProductTx(address, product.productId, product.blockchainHash);

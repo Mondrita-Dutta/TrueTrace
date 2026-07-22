@@ -101,6 +101,32 @@ export const buildRegisterProductTx = async (sourcePublicKey, productId, hash) =
   return await buildSorobanTransaction(sourcePublicKey, "register_product", args);
 };
 
+export const buildBatchRegisterProductTx = async (sourcePublicKey, products) => {
+  if (!CONTRACT_ID) throw new Error("Contract ID not found in .env. Please deploy the contract first.");
+
+  const account = await server.loadAccount(sourcePublicKey);
+  const contract = new StellarSdk.Contract(CONTRACT_ID);
+
+  let txBuilder = new StellarSdk.TransactionBuilder(account, {
+    fee: (StellarSdk.BASE_FEE * products.length).toString(),
+    networkPassphrase: StellarSdk.Networks.TESTNET,
+  });
+
+  for (const product of products) {
+    const args = [
+      nativeToScVal(product.productId, { type: 'string' }),
+      new Address(sourcePublicKey).toScVal(),
+      nativeToScVal(product.blockchainHash, { type: 'string' })
+    ];
+    txBuilder = txBuilder.addOperation(contract.call("register_product", ...args));
+  }
+
+  const tx = txBuilder.setTimeout(180).build();
+
+  const preparedTx = await rpcServer.prepareTransaction(tx);
+  return preparedTx.toXDR();
+};
+
 export const buildUpdateProductTx = async (sourcePublicKey, productId, hash) => {
   const args = [
     nativeToScVal(productId, { type: 'string' }),

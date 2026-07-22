@@ -14,6 +14,8 @@ import { useSearch } from '../../context/SearchContext';
 
 import productService from '../../services/productService';
 import DeleteConfirmModal from '../../components/dashboard/products/DeleteConfirmModal';
+import { connectFreighter, signXLMTransaction } from '../../utils/freighterUtils';
+import { buildRegisterProductTx, submitSorobanTransaction } from '../../services/stellarService';
 
 const ProductsPage = () => {
   const navigate = useNavigate();
@@ -127,8 +129,59 @@ const ProductsPage = () => {
     try {
       setIsActionLoading(true);
       const idsToPublish = specificIds && Array.isArray(specificIds) ? specificIds : selectedIds;
-      const res = await productService.publishBatchToBlockchain(idsToPublish);
-      toast.success(res.message || 'Products published successfully');
+      
+      const productsToPublish = products.filter(p => idsToPublish.includes(p._id) && p.blockchainStatus !== 'Verified');
+      if (productsToPublish.length === 0) {
+        toast.info('Selected products are already published or invalid');
+        return;
+      }
+      if (productsToPublish.length > 100) {
+        throw new Error('You can only publish a maximum of 100 products at a time (Blockchain transaction limit)');
+      }
+
+      toast.info('Connecting to Freighter wallet...');
+      const address = await connectFreighter();
+      if (!address) throw new Error("Wallet not connected");
+
+      // Verify wallet
+      if (user?.walletAddress && address !== user.walletAddress) {
+        throw new Error(`Please connect with your registered wallet address: ${user.walletAddress}`);
+      }
+
+      toast.info(`Note: Soroban currently requires individual signatures. Please sign for each product (${productsToPublish.length} total).`, { autoClose: 5000 });
+      
+      let successCount = 0;
+      for (let i = 0; i < productsToPublish.length; i++) {
+        const product = productsToPublish[i];
+        try {
+          toast.info(`Signing ${i + 1} of ${productsToPublish.length}...`);
+          const xdr = await buildRegisterProductTx(address, product.productId, product.blockchainHash);
+          const signedXdr = await signXLMTransaction(xdr, address);
+          
+          toast.info(`Submitting ${i + 1} of ${productsToPublish.length}...`);
+          const submitRes = await submitSorobanTransaction(signedXdr);
+          
+          if (!submitRes.success) {
+            toast.error(`Transaction failed for ${product.productName}`);
+            continue;
+          }
+
+          await productService.markBatchAsPublishedSoroban([product._id], submitRes.hash);
+          successCount++;
+        } catch (err) {
+          console.error("Publishing error for product", product._id, err);
+          toast.error(`Failed to publish ${product.productName}`);
+          if (err.message && err.message.toLowerCase().includes('declined')) {
+            toast.info('Publishing stopped because signature was declined.');
+            break;
+          }
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully published ${successCount} products`);
+      }
+      
       if (!specificIds || !Array.isArray(specificIds)) setSelectedIds([]);
       fetchProducts(pagination.page);
     } catch (err) {

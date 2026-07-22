@@ -16,6 +16,7 @@ const RegisterPage = () => {
   const location = useLocation();
   const { register: registerForm, handleSubmit, watch, formState: { errors }, trigger, getValues } = useForm();
   const [role, setRole] = useState(location.state?.role || 'customer'); // 'customer' or 'manufacturer'
+  const [walletAddress, setWalletAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -23,7 +24,21 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const password = watch("password", "");
 
-  // handleWalletRegister removed as it's merged into onSubmit
+  const handleConnectWallet = async () => {
+    setIsWalletLoading(true);
+    setApiError('');
+    try {
+      const address = await connectFreighter();
+      if (address) {
+        setWalletAddress(address);
+      }
+    } catch (error) {
+      setApiError(error.message || 'Failed to connect wallet');
+      toast.error(error.message || 'Failed to connect wallet');
+    } finally {
+      setIsWalletLoading(false);
+    }
+  };
 
   const calculateStrength = (pass) => {
     let score = 0;
@@ -38,11 +53,16 @@ const RegisterPage = () => {
   const strength = calculateStrength(password);
   
   const onSubmit = async (data) => {
+    if (role === 'manufacturer' && !walletAddress) {
+      setApiError('You must connect a wallet to register as a manufacturer');
+      return;
+    }
+    
     setIsLoading(true);
     setApiError('');
     try {
       // Step 1: Register User
-      const fullData = { ...data, role };
+      const fullData = { ...data, role, walletAddress: role === 'manufacturer' ? walletAddress : undefined };
       const res = await register(fullData);
       
       // Step 2: Redirect based on role
@@ -118,13 +138,30 @@ const RegisterPage = () => {
             </div>
             
             {role === 'manufacturer' && (
-              <Input 
-                label="Company Name" 
-                id="companyName" 
-                placeholder="Acme Corp"
-                {...registerForm('companyName', { required: 'Company name is required for manufacturers' })}
-                error={errors.companyName?.message}
-              />
+              <>
+                <Input 
+                  label="Company Name" 
+                  id="companyName" 
+                  placeholder="Acme Corp"
+                  {...registerForm('companyName', { required: 'Company name is required for manufacturers' })}
+                  error={errors.companyName?.message}
+                />
+                
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Blockchain Wallet Connection</h4>
+                  {walletAddress ? (
+                    <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <span className="font-mono text-sm text-primary tracking-wider">{walletAddress.substring(0, 8)}...{walletAddress.substring(48)}</span>
+                      <button type="button" onClick={() => setWalletAddress('')} className="text-xs text-danger hover:underline font-medium">Change</button>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="outline" className="w-full flex items-center justify-center gap-2" onClick={handleConnectWallet} isLoading={isWalletLoading}>
+                      Connect Wallet
+                    </Button>
+                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Required for publishing product QR codes to the blockchain.</p>
+                </div>
+              </>
             )}
 
             <Input 

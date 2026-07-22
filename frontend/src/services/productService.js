@@ -75,6 +75,11 @@ const productService = {
     return res.data;
   },
 
+  markBatchAsPublishedSoroban: async (ids, txHash) => {
+    const res = await api.post('/products/blockchain/batch/soroban', { ids, txHash });
+    return res.data;
+  },
+
   // Bulk update (e.g. status)
   bulkUpdateProducts: async (ids, updateData) => {
     const res = await api.put('/products/bulk/update', { ids, updateData });

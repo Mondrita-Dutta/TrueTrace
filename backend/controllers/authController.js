@@ -14,7 +14,7 @@ const register = async (req, res) => {
     return res.error('Validation Error', 400, errors.array());
   }
 
-  const { role, email, password, firstName, lastName, phone, companyName, manufacturerName, companyAddress, country, businessRegistrationNumber, website } = req.body;
+  const { role, email, password, firstName, lastName, phone, companyName, manufacturerName, companyAddress, country, businessRegistrationNumber, website, walletAddress } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -34,12 +34,23 @@ const register = async (req, res) => {
       userData.lastName = lastName;
       userData.status = 'active'; // Customers are active immediately
     } else if (role === 'manufacturer') {
+      if (!walletAddress) {
+        return res.error('Wallet address is required for manufacturer registration', 400);
+      }
+      
+      // Optional: Check if wallet is already registered to another account
+      const walletExists = await User.findOne({ walletAddress });
+      if (walletExists) {
+        return res.error('This wallet address is already registered to an account', 400);
+      }
+
       userData.companyName = companyName;
       userData.manufacturerName = manufacturerName;
       userData.companyAddress = companyAddress;
       userData.country = country;
       userData.businessRegistrationNumber = businessRegistrationNumber;
       userData.website = website;
+      userData.walletAddress = walletAddress;
       userData.status = 'active'; // TEMPORARY DEV OVERRIDE: Automatically activate manufacturers (usually 'pending')
     } else {
       return res.error('Invalid role specified', 400);
@@ -65,6 +76,7 @@ const register = async (req, res) => {
           licenseNumber: user.licenseNumber,
           country: user.country,
           website: user.website,
+          walletAddress: user.walletAddress,
           token: generateToken(user._id)
         }
       });
@@ -122,6 +134,7 @@ const login = async (req, res) => {
       licenseNumber: user.licenseNumber,
       country: user.country,
       website: user.website,
+      walletAddress: user.walletAddress,
       token: generateToken(user._id)
     }, 'Login successful');
   } catch (error) {
@@ -149,7 +162,8 @@ const getMe = async (req, res) => {
       businessRegistrationNumber: req.user.businessRegistrationNumber,
       licenseNumber: req.user.licenseNumber,
       country: req.user.country,
-      website: req.user.website
+      website: req.user.website,
+      walletAddress: req.user.walletAddress
     });
   } catch (error) {
     console.error(error);
@@ -221,7 +235,8 @@ const updateProfile = async (req, res) => {
         businessRegistrationNumber: updatedUser.businessRegistrationNumber,
         licenseNumber: updatedUser.licenseNumber,
         country: updatedUser.country,
-        website: updatedUser.website
+        website: updatedUser.website,
+        walletAddress: updatedUser.walletAddress
       }, 'Profile updated successfully');
     } else {
       res.error('User not found', 404);
@@ -286,11 +301,17 @@ const walletRegister = async (req, res) => {
       _id: user._id,
       role: user.role,
       email: user.email,
-      walletAddress: user.walletAddress,
       status: user.status,
       firstName: user.firstName,
       lastName: user.lastName,
       companyName: user.companyName,
+      phone: user.phone,
+      companyAddress: user.companyAddress,
+      businessRegistrationNumber: user.businessRegistrationNumber,
+      licenseNumber: user.licenseNumber,
+      country: user.country,
+      website: user.website,
+      walletAddress: user.walletAddress,
       token: generateToken(user._id)
     }, 'Wallet registration successful');
   } catch (error) {
@@ -323,11 +344,17 @@ const walletLogin = async (req, res) => {
       _id: user._id,
       role: user.role,
       email: user.email,
-      walletAddress: user.walletAddress,
       status: user.status,
       firstName: user.firstName,
       lastName: user.lastName,
       companyName: user.companyName,
+      phone: user.phone,
+      companyAddress: user.companyAddress,
+      businessRegistrationNumber: user.businessRegistrationNumber,
+      licenseNumber: user.licenseNumber,
+      country: user.country,
+      website: user.website,
+      walletAddress: user.walletAddress,
       token: generateToken(user._id)
     }, 'Wallet login successful');
   } catch (error) {

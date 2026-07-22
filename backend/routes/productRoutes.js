@@ -28,6 +28,7 @@ router.post('/batch', upload.single('productImage'), productController.createPro
 router.post('/bulk/create', productController.bulkCreateProducts);
 router.put('/bulk/update', productController.bulkUpdateProducts);
 router.post('/blockchain/batch', productController.publishBatchToBlockchain);
+router.post('/blockchain/batch/soroban', logAction('Soroban Batch Register', 'Product'), productController.markBatchAsPublishedSoroban);
 
 router.get('/:id', productController.getProductById);
 router.put('/:id', upload.single('productImage'), productValidationRules(), validate, logAction('Update Product', 'Product'), productController.updateProduct);

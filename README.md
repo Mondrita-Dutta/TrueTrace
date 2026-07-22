@@ -33,6 +33,20 @@ TrueTrace solves this by anchoring product metadata and lifecycle events directl
 - **Stellar Network:** Stellar's low transaction fees (fractions of a cent) and rapid consensus (3-5 seconds) make it the perfect ledger for high-volume supply chain operations.
 - **Soroban Smart Contracts:** Soroban provides a secure, predictable Rust-based WebAssembly environment, ensuring that the custody and status rules of every product are enforced immutably on-chain.
 
+- **Dual-Contract Architecture:** 
+
+ - **Metrics Contract (`truetrace-metrics`)**
+   - **Role:** Acts as a global, immutable counter for platform analytics.
+   - **Storage:** Persists a global `COUNT` representing the total number of products secured across the entire TrueTrace ecosystem.
+   - **Functions:** `increment`, `get_count`.
+
+- **Core Supply Chain Contract (`truetrace-core`)**
+   - **Role:** Handles the actual product registration and cryptographic hash verification to prove authenticity.
+   - **Storage:** Persists `Product` records (mapping Product IDs to their secure hashes) and the address of the linked Metrics Contract.
+   - **Inter-Contract Communication:** When a manufacturer calls `register_product()`, the Core contract successfully records the product hash, and then dynamically invokes the Metrics Contract to instantly increment the global platform counter.
+
+
+
 ---
 
 ## 🚀 Features & Tech Stack
@@ -67,6 +81,20 @@ graph TD
     B -->|Reads Provenance| E
     B -->|Logs Analytics| D
     B -- Returns Verification Result --> F
+```
+### Inter-Contract Communication Flow
+```mermaid
+sequenceDiagram
+    participant API as TrueTrace Backend API
+    participant Core as TrueTrace Core Contract (CBI5...)
+    participant Metrics as Metrics Contract (CCYJ...)
+    
+    API->>Core: invoke register_product(product_id, hash)
+    Core->>Core: Store Product Hash
+    Core->>Metrics: invoke increment()
+    Metrics->>Metrics: Increase Total Count
+    Metrics-->>Core: Success
+    Core-->>API: Success & Return
 ```
 
 1. **Backend Integration (Express & MongoDB):** The backend serves as the bridge for creating product templates and logging off-chain telemetry like IP addresses, locations, and timestamps (`ScanHistory` model). This allows manufacturers to see deep analytics without bogging down the blockchain with unnecessary data.
@@ -141,9 +169,15 @@ TrueTrace/
 
 The Soroban smart contract is deployed on the Stellar Testnet:
 
-- **Contract ID**: `CC76KOA3WHTRYSYL4W7J4CFMSMM374VDZWKWFDPVTLD6AONQEQWEWD2I`
-- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CC76KOA3WHTRYSYL4W7J4CFMSMM374VDZWKWFDPVTLD6AONQEQWEWD2I
-
+- **TrueTrace Contract (Core) ID**: `CBI5GWR2SV2LYLM2COSMLY7NGCLIJGFAS3J65XMQW67MBPKD3MRTW4MN`
+- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CBI5GWR2SV2LYLM2COSMLY7NGCLIJGFAS3J65XMQW67MBPKD3MRTW4MN
+- **Metrics Contract ID**: `CCYJY3SFYNBXQ7BXPUAFCAMLJSWEX3XFASOSIMM5UGSOWYCTC7WXKPRG`
+- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CCYJY3SFYNBXQ7BXPUAFCAMLJSWEX3XFASOSIMM5UGSOWYCTC7WXKPRG
+**Recent Transactions:**
+- **Metrics Contract Deployment ID**: db5cd95b5ab03ac969c001bc660c5f5d1b26258ece58b47f88879741e4a3eb46
+- **Metrics Contract Deployment Link**:https://stellar.expert/explorer/testnet/tx/16081774895456256
+- **Core Cross-Contract Initialization**: 816be8b5e64172080397571b75ae4858bc21f346583369be8bda6e50054c12ad
+- **Core Cross-Contract Initialization**:https://stellar.expert/explorer/testnet/tx/16081783485415424
 ---
 ## 🛡️ CI/CD Pipeline & Deployment
 

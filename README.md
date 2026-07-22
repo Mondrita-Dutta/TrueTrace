@@ -10,6 +10,7 @@
 <img width="1338" height="768" alt="image" src="https://github.com/user-attachments/assets/2ebf52e9-30f8-4763-a288-33bb76f3961a" /> 
 
   <h3>🚀 Live Production Deployment: https://true-trace-phi.vercel.app/</h3>
+  <h3>🎥 Demo Video Walkthrough: https://drive.google.com/file/d/1_pYjiXmi5TKP7yDDcMiWtmJfUx1CDLAy/view?usp=drivesdk</h3>
 
 *"TrueTrace is a Web3 supply chain verification platform that allows manufacturers to register products securely on the Stellar blockchain, providing consumers with an immutable source of truth to verify the authenticity and lifecycle of their purchases."*
 
@@ -126,22 +127,30 @@ TrueTrace/
 <img width="1355" height="761" alt="image" src="https://github.com/user-attachments/assets/122a3531-0097-4fde-a126-aeeb7800e65e" />
 
 ### Mobile UI Screenshot 
-<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/517db587-379f-4b1c-9b79-b5e5e38e8606" />
-<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/07b8726b-92e3-4ae6-af37-f4c7b6ac625b" />
-<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/c11cbbd7-8d04-4179-af38-ff8fb7efbebf" />
-<img width="717" height="1600" alt="image" src="https://github.com/user-attachments/assets/82fd26c2-964b-4b25-9af1-630ab4b9d9c5" />
+<img height="750" alt="image" src="https://github.com/user-attachments/assets/517db587-379f-4b1c-9b79-b5e5e38e8606" />
+<img height="750" alt="image" src="https://github.com/user-attachments/assets/07b8726b-92e3-4ae6-af37-f4c7b6ac625b" />
+<img height="750" alt="image" src="https://github.com/user-attachments/assets/c11cbbd7-8d04-4179-af38-ff8fb7efbebf" />
+<img height="750" alt="image" src="https://github.com/user-attachments/assets/82fd26c2-964b-4b25-9af1-630ab4b9d9c5" />
 
 ### Test case 
 <img width="1114" height="675" alt="image" src="https://github.com/user-attachments/assets/6c509a0b-9427-4cb1-992a-5e17c2f3be42" />
 <img width="870" height="470" alt="image" src="https://github.com/user-attachments/assets/a76080d0-1034-4c16-a98f-171095061d66" />
 
 ---
-## 🌐 Deployed Smart Contract (Level 2 Testnet Proof)
+## 🌐 Deployed Smart Contract:
 
 The Soroban smart contract is deployed on the Stellar Testnet:
 
-- **Contract ID**: `CD6YFB6S63MZQRGOUGHMSZ3FLDKLHFEEZ5FIQCDG3FZ2SV5AUTFGJXE2`
-- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CD6YFB6S63MZQRGOUGHMSZ3FLDKLHFEEZ5FIQCDG3FZ2SV5AUTFGJXE2
+- **Contract ID**: `CC76KOA3WHTRYSYL4W7J4CFMSMM374VDZWKWFDPVTLD6AONQEQWEWD2I`
+- **Stellar.expert Explorer Link**:https://stellar.expert/explorer/testnet/contract/CC76KOA3WHTRYSYL4W7J4CFMSMM374VDZWKWFDPVTLD6AONQEQWEWD2I
+
+---
+## 🛡️ CI/CD Pipeline & Deployment
+
+TrueTrace is built with production in mind. 
+- **Vercel:** We recommend deploying the React frontend to Vercel. Connect the GitHub repo, set the Framework Preset to Vite, and configure your `.env` variables.
+- **Render:** Deploy the Node.js backend to Render as a Web Service. Ensure your `MONGO_URI` and other secrets are safely stored in the environment configuration.
+- **GitHub Actions:** The repository includes a robust CI/CD pipeline (`.github/workflows/ci-cd.yml`) that automatically lints, tests, and builds the Rust smart contract (`wasm32-unknown-unknown`) on every push.
 
 ---
 
@@ -177,13 +186,6 @@ stellar contract build
 
 ---
 
-## 🛡️ CI/CD Pipeline & Deployment
 
-TrueTrace is built with production in mind. 
-- **Vercel:** We recommend deploying the React frontend to Vercel. Connect the GitHub repo, set the Framework Preset to Vite, and configure your `.env` variables.
-- **Render:** Deploy the Node.js backend to Render as a Web Service. Ensure your `MONGO_URI` and other secrets are safely stored in the environment configuration.
-- **GitHub Actions:** The repository includes a robust CI/CD pipeline (`.github/workflows/ci-cd.yml`) that automatically lints, tests, and builds the Rust smart contract (`wasm32-unknown-unknown`) on every push.
-
----
 
 

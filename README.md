@@ -1,58 +1,125 @@
+<div align="center">
+  
 # TrueTrace
-"Verify Every Product. Trust Every Purchase."
 
-TrueTrace is a blockchain-powered supply chain verification platform. It allows manufacturers to register products on the Stellar blockchain and provides a frontend interface for consumers to verify the authenticity and lifecycle of their purchases.
+**Verify Every Product. Trust Every Purchase. Blockchain-powered supply chain authenticity built on the Stellar network using Soroban Smart Contracts.**
 
-## 🏗️ Architecture
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Stellar](https://img.shields.io/badge/Network-Stellar_Testnet-black)](https://stellar.org/)
+[![Soroban](https://img.shields.io/badge/Smart_Contracts-Soroban-orange)](https://soroban.stellar.org/)
 
-TrueTrace is composed of three main layers:
-1. **Frontend**: A React application built with Vite, styled with TailwindCSS.
-2. **Backend**: An Express.js Node API connected to MongoDB for off-chain data (users, analytics, QR code management).
-3. **Blockchain (Smart Contract)**: A Rust-based Soroban smart contract deployed on the Stellar network to handle immutable product verification.
+  <h3>🚀 Live Production Deployment: <a href="https://truetrace-demo.vercel.app/">https://truetrace-demo.vercel.app/</a></h3>
 
-## 🚀 Deployment Guide (Vercel & Render)
+*"TrueTrace is a Web3 supply chain verification platform that allows manufacturers to register products securely on the Stellar blockchain, providing consumers with an immutable source of truth to verify the authenticity and lifecycle of their purchases."*
 
-To take TrueTrace from local development to production, we recommend deploying the **Frontend to Vercel** and the **Backend to Render**.
-
-### 1. Deploying the Frontend (Vercel)
-Vercel is the optimal hosting platform for Vite/React frontends.
-1. Log in to [Vercel](https://vercel.com/) and click **Add New > Project**.
-2. Import this GitHub repository.
-3. In the project configuration:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-4. Expand **Environment Variables** and add the variables from your `frontend/.env` file. Be sure to update `VITE_API_URL` to point to your live backend URL (once deployed).
-5. Click **Deploy**.
-
-### 2. Deploying the Backend (Render)
-Render is perfect for Node.js/Express applications.
-1. Log in to [Render](https://render.com/) and click **New > Web Service**.
-2. Connect your GitHub and select this repository.
-3. Configure the service:
-   - **Root Directory**: `backend`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-4. Expand **Environment Variables** and securely add all the variables from your `backend/.env` file (e.g., `MONGO_URI`, `JWT_SECRET`, etc.).
-5. Click **Deploy Web Service**.
+</div>
 
 ---
 
-## 💻 Local Development Setup
+## 📖 Project Overview
 
-If you want to run TrueTrace locally, follow these steps:
+### The Problem
+Counterfeit products remain a pervasive issue across global supply chains. When manufacturers release products, tracking them securely and ensuring end-consumers receive genuine items is extremely difficult. Traditional databases can be tampered with, and basic QR codes can easily be cloned.
+
+### The Solution: TrueTrace
+TrueTrace solves this by anchoring product metadata and lifecycle events directly to the Stellar blockchain. 
+- **Immutable Registration:** Manufacturers mint their product records as unique, immutable assets on-chain via Soroban smart contracts.
+- **Consumer Verification:** Consumers simply scan a QR code to read the item's digital passport, fetching the unalterable truth from the decentralized ledger.
+- **Counterfeit Detection:** Through our scan history engine, repeated scans of cloned items or scans from impossible geographic locations flag the item as a potential counterfeit, protecting both brand integrity and consumer safety.
+
+### Why Stellar & Soroban?
+- **Stellar Network:** Stellar's low transaction fees (fractions of a cent) and rapid consensus (3-5 seconds) make it the perfect ledger for high-volume supply chain operations.
+- **Soroban Smart Contracts:** Soroban provides a secure, predictable Rust-based WebAssembly environment, ensuring that the custody and status rules of every product are enforced immutably on-chain.
+
+---
+
+## 🚀 Features & Tech Stack
+
+**Frontend Layer**
+- **Framework:** React with Vite
+- **Styling:** Tailwind CSS
+- **Integration:** Stellar SDK / Soroban RPC
+
+**Backend Layer**
+- **Server:** Node.js & Express.js
+- **Database:** MongoDB (via Mongoose) for off-chain analytics and fast queries (e.g., Scan History mapping).
+- **Authentication:** JWT Role-Based Access (Admin/Manufacturer).
+
+**Blockchain Layer**
+- **Smart Contracts:** Rust (Soroban SDK)
+- **Network:** Stellar Testnet
+
+---
+
+## ⚙️ Architecture & Core Mechanism
+
+### High-Level System Architecture
+
+```mermaid
+graph TD
+    A[Manufacturer Dashboard] -->|Registers Product| B(Node.js / Express Backend)
+    B -->|Mints to Blockchain| C(Soroban Smart Contract)
+    B -->|Caches Metadata| D[(MongoDB)]
+    C -->|Stores Immutable State| E[(Stellar Network)]
+    F[Consumer Mobile] -->|Scans QR Code| B
+    B -->|Reads Provenance| E
+    B -->|Logs Analytics| D
+    B -- Returns Verification Result --> F
+```
+
+1. **Backend Integration (Express & MongoDB):** The backend serves as the bridge for creating product templates and logging off-chain telemetry like IP addresses, locations, and timestamps (`ScanHistory` model). This allows manufacturers to see deep analytics without bogging down the blockchain with unnecessary data.
+2. **Soroban Smart Contracts (Rust):** The heavy lifting of trust is executed on-chain. When a product is registered, the Soroban `truetrace` contract permanently records its existence and status on the Stellar network. 
+3. **Frontend Dashboard:** A rich React frontend provides manufacturers with insights, generated QR codes, and total verification counts. Consumers use a lightweight, mobile-responsive view to scan and verify.
+
+---
+
+## 📁 Project Directory Structure
+
+```text
+TrueTrace/
+├── backend/                    # Express.js Node API & MongoDB Models
+│   ├── models/                 # Mongoose schemas (ScanHistory, ProductTemplate)
+│   ├── routes/                 # API Endpoints (Admin, Verification)
+│   └── server.js               # Main Backend Entrypoint
+├── blockchain/                 # Soroban Smart Contracts Workspace
+│   ├── contracts/truetrace/    # Core Product Registry Contract in Rust
+│   └── Cargo.toml              # Rust Workspace configuration
+├── frontend/                   # React Frontend Application (Vite)
+│   ├── src/pages/              # Manufacturer Dashboards & Public Views
+│   └── package.json            # NPM Dependencies
+└── README.md                   # Project Documentation
+```
+
+---
+
+## 📸 Platform Previews
+
+### 🌟 Manufacturer Dashboard
+*Manufacturers can track all minted products, total authentic scans, and potential counterfeits in one clean dashboard.*
+`[INSERT SCREENSHOT: Manufacturer Dashboard showing metrics and product table]`
+
+### 🔍 Consumer QR Verification
+*Consumers scan the physical QR code to immediately see the product's on-chain provenance and verification status.*
+`[INSERT SCREENSHOT: Mobile Verification View with Success/Counterfeit alert]`
+
+### 📊 Scan History Analytics
+*Detailed reports on where and when products are being scanned.*
+`[INSERT SCREENSHOT: Scan History location mapping]`
+
+---
+
+## 💻 Local Development & Setup
 
 ### Prerequisites
 - Node.js (v20+)
-- Rust (v1.80+) and `stellar-cli` for smart contract development
+- Rust (v1.80+) and `stellar-cli`
 - MongoDB instance (local or Atlas)
 
 ### Backend Setup
 ```bash
 cd backend
 npm install
-# Create a .env file based on environment requirements
+# Create a .env file based on environment requirements (MONGO_URI, JWT_SECRET, etc.)
 npm run dev
 ```
 
@@ -71,8 +138,24 @@ stellar contract build
 # Follow the deployment scripts in deploy_contract.sh to push to testnet
 ```
 
-## 🛡️ CI/CD Pipeline
-This repository includes a robust GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) that automatically:
-- Lints and tests the frontend and backend.
-- Builds the Rust smart contract targeting `wasm32-unknown-unknown` and optimizes it using `stellar-cli`.
-- Deploys the codebase (configured via placeholders).
+---
+
+## 🛡️ CI/CD Pipeline & Deployment
+
+TrueTrace is built with production in mind. 
+- **Vercel:** We recommend deploying the React frontend to Vercel. Connect the GitHub repo, set the Framework Preset to Vite, and configure your `.env` variables.
+- **Render:** Deploy the Node.js backend to Render as a Web Service. Ensure your `MONGO_URI` and other secrets are safely stored in the environment configuration.
+- **GitHub Actions:** The repository includes a robust CI/CD pipeline (`.github/workflows/ci-cd.yml`) that automatically lints, tests, and builds the Rust smart contract (`wasm32-unknown-unknown`) on every push.
+
+---
+
+## 🤝 Contributing
+Contributions are welcome! Please ensure that any feature additions are accompanied by relevant tests.
+1. Fork the repo.
+2. Create a feature branch (`git checkout -b feature/new-idea`).
+3. Commit your changes (`git commit -m 'feat: added new idea'`).
+4. Push to the branch (`git push origin feature/new-idea`).
+5. Open a Pull Request.
+
+## License
+This project is licensed under the **MIT License**.

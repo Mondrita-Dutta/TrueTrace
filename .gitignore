@@ -2,3 +2,12 @@ node_modules/
 dist/
 .env
 .DS_Store
+*.tar.gz
+backend/uploads/
+blockchain/target/
+blockchain/contracts/truetrace/test_snapshots/
+*.js
+!backend/*.js
+!frontend/*.js
+!frontend/src/**/*.js
+!fix_images*.js

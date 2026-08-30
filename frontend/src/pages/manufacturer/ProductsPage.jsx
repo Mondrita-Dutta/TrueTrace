@@ -85,7 +85,26 @@ const ProductsPage = () => {
     const timer = setTimeout(() => {
       fetchProducts(1);
     }, 500);
-    return () => clearTimeout(timer);
+    const handleDownloadQR = async (e, url, filename) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download QR code');
+    }
+  };
+
+  return () => clearTimeout(timer);
   }, [searchQuery, categoryFilter, statusFilter, sortBy, sortOrder]);
 
   const handleRegisterClick = () => {
@@ -299,9 +318,9 @@ const ProductsPage = () => {
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-1">
           {product.qrImageUrl && (
-            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`} download={`QR-${product.productId}.png`} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors" title="Download QR">
-              <FiDownload />
-            </a>
+            <a href="#" onClick={(e) => handleDownloadQR(e, `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${product.qrImageUrl}`, `QR-${product.productId}.png`)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors" title="Download QR">
+                <FiDownload />
+              </a>
           )}
           <button onClick={() => navigate(`/manufacturer/products/${product._id}`)} className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View Details">
             <FiEye />

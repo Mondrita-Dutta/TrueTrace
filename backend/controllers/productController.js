@@ -31,9 +31,11 @@ exports.createProduct = async (req, res) => {
     }
 
     // Validate dates
-    if (new Date(manufacturingDate) > new Date()) {
-      return res.error('Manufacturing date cannot be in the future', 400);
-    }
+    const nowForCreate = new Date();
+      nowForCreate.setHours(23, 59, 59, 999);
+      if (new Date(manufacturingDate) > nowForCreate) {
+        return res.error('Manufacturing date cannot be in the future', 400);
+      }
     if (expiryDate && new Date(expiryDate) < new Date(manufacturingDate)) {
       return res.error('Expiry date cannot be before manufacturing date', 400);
     }
@@ -248,9 +250,11 @@ exports.updateProduct = async (req, res) => {
 
     // Validate dates if updated
     const newMfgDate = manufacturingDate || product.manufacturingDate;
-    if (manufacturingDate && new Date(manufacturingDate) > new Date()) {
-      return res.error('Manufacturing date cannot be in the future', 400);
-    }
+    const nowForUpdate = new Date();
+      nowForUpdate.setHours(23, 59, 59, 999);
+      if (manufacturingDate && new Date(manufacturingDate) > nowForUpdate) {
+        return res.error('Manufacturing date cannot be in the future', 400);
+      }
     const newExpDate = expiryDate || product.expiryDate;
     if (newExpDate && new Date(newExpDate) < new Date(newMfgDate)) {
       return res.error('Expiry date cannot be before manufacturing date', 400);

@@ -32,15 +32,19 @@ const Navbar = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm border-b border-slate-200 dark:border-slate-800 py-3' : 'bg-transparent py-5'}`}>
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">T</span>
-          </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">TrueTrace</span>
-        </Link>
+        
+        {/* Logo - Left */}
+        <div className="flex md:w-1/3 justify-start">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">T</span>
+            </div>
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">TrueTrace</span>
+          </Link>
+        </div>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center space-x-8">
+        {/* Desktop Nav - Center */}
+        <div className="hidden md:flex md:w-1/3 justify-center">
           <ul className="flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-slate-200/50 dark:border-slate-700/50">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
@@ -60,29 +64,30 @@ const Navbar = () => {
               );
             })}
           </ul>
+        </div>
           
-          <div className="flex items-center space-x-4">
-            <button onClick={toggleTheme} className="text-slate-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-              {isDark ? <FiSun size={20} /> : <FiMoon size={20} />}
-            </button>
-            {isAuthenticated ? (
-              <>
-                <Link to={user?.role === 'admin' || user?.role === 'superadmin' ? '/admin' : '/manufacturer'}>
-                  <Button variant="ghost" size="sm">Dashboard</Button>
-                </Link>
-                <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="primary" size="sm">Register</Button>
-                </Link>
-              </>
-            )}
-          </div>
+        {/* Desktop Actions - Right */}
+        <div className="hidden md:flex md:w-1/3 justify-end items-center space-x-4">
+          <button onClick={toggleTheme} className="text-slate-500 hover:text-primary transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            {isDark ? <FiSun size={20} /> : <FiMoon size={20} />}
+          </button>
+          {isAuthenticated ? (
+            <>
+              <Link to={user?.role === 'admin' || user?.role === 'superadmin' ? '/admin' : '/manufacturer'}>
+                <Button variant="ghost" size="sm">Dashboard</Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={logout}>Logout</Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">Login</Button>
+              </Link>
+              <Link to="/register">
+                <Button variant="primary" size="sm">Register</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle */}

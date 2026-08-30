@@ -64,7 +64,10 @@ const productValidationRules = () => {
       .isISO8601()
       .withMessage('Invalid date format')
       .custom((value) => {
-        if (new Date(value) > new Date()) {
+        const inputDate = new Date(value);
+        const now = new Date();
+        now.setHours(23, 59, 59, 999);
+        if (inputDate > now) {
           throw new Error('Manufacturing date cannot be in the future');
         }
         return true;

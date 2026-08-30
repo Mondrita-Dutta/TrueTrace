@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaShieldAlt, FaQrcode, FaChartLine, FaChevronDown } from 'react-icons/fa';
@@ -8,6 +8,7 @@ import SectionTitle from '../../components/ui/SectionTitle';
 import api from '../../services/api';
 
 const LandingPage = () => {
+
   const [metricsCount, setMetricsCount] = useState("...");
 
   useEffect(() => {
@@ -27,21 +28,61 @@ const LandingPage = () => {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-indigo-950 -z-10" />
-        {/* Animated Shapes */}
-        <motion.div 
-          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }} 
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10"
-        />
-        <motion.div 
-          animate={{ y: [0, 30, 0], rotate: [0, -5, 0] }} 
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-10 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl -z-10"
-        />
+      <section className="relative overflow-hidden pt-20 pb-32 bg-slate-50 dark:bg-slate-950">
         
-        <div className="container mx-auto px-4 text-center">
+        {/* Animated Particle Network Background (Idea 2) */}
+        {/* Animated Grid & Glow Background (Idea 3) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Subtle Grid Pattern */}
+          <motion.div 
+            animate={{ backgroundPosition: ["0px 0px", "0px 40px"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.1) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)'
+            }}
+          />
+          
+          {/* Central Breathing Glow */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.6, 0.4]
+            }} 
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-0 left-1/2 -translate-x-1/2"
+            style={{ 
+              width: '800px', 
+              height: '500px', 
+              borderRadius: '50%',
+              backgroundColor: 'rgba(42, 157, 143, 0.25)', 
+              filter: 'blur(100px)',
+              transform: 'translateX(-50%) translateY(-30%)'
+            }}
+          />
+          
+          {/* Accent Glow */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.5, 1],
+              opacity: [0.2, 0.4, 0.2]
+            }} 
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute top-1/4 right-0"
+            style={{ 
+              width: '600px', 
+              height: '600px', 
+              borderRadius: '50%',
+              backgroundColor: 'rgba(102, 126, 234, 0.15)', 
+              filter: 'blur(120px)'
+            }}
+          />
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

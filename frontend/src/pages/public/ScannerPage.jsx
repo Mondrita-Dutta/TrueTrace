@@ -87,12 +87,18 @@ const ScannerPage = () => {
   const handleSuccessfulScan = async (decodedText) => {
     await stopScanning();
     
-    let productId = decodedText;
+    let productId = decodedText.trim();
     try {
-      const data = JSON.parse(decodedText);
+      const data = JSON.parse(productId);
       if (data.productId) productId = data.productId;
     } catch (e) {
-      // not JSON, keep original
+      try {
+        const url = new URL(productId);
+        const parts = url.pathname.split('/');
+        if (parts.includes('verify')) {
+          productId = parts[parts.length - 1];
+        }
+      } catch (err) {}
     }
     navigate(`/verify/${encodeURIComponent(productId)}`);
   };

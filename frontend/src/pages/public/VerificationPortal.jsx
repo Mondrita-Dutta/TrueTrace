@@ -104,6 +104,17 @@ const VerificationPortal = () => {
   const handleSearch = async (idToSearch = searchId) => {
     if (!idToSearch.trim()) return;
     
+    let finalId = idToSearch.trim();
+    try {
+      const url = new URL(finalId);
+      const parts = url.pathname.split('/');
+      if (parts.includes('verify')) {
+        finalId = parts[parts.length - 1];
+      }
+    } catch (err) {}
+    
+    idToSearch = finalId;
+    
     // Update URL if searching manually
     if (idToSearch !== initialId) {
       navigate(`/verify/${encodeURIComponent(idToSearch)}`, { replace: true });

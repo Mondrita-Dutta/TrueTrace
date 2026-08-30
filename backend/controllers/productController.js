@@ -615,12 +615,8 @@ exports.createProductBatch = async (req, res) => {
       const serialNumber = `${batchNumber}-${String(i).padStart(4, '0')}`;
       
       const itemTimestamp = new Date().toISOString();
-      const qrDataPayload = {
-        productId,
-        manufacturerId: req.user.id,
-        timestamp: itemTimestamp,
-      };
-      const qrDataString = JSON.stringify(qrDataPayload);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const qrDataString = frontendUrl + '/verify/' + productId;
       
       const qrFilename = `qr-${productId}.png`;
       const qrFilePath = path.join(qrDir, qrFilename);
@@ -691,12 +687,8 @@ exports.bulkCreateProducts = async (req, res) => {
       const sequence = String(productCount).padStart(6, '0');
       const productId = `TT-${currentYear}-${sequence}`;
       
-      const qrDataPayload = {
-        productId,
-        manufacturerId: req.user.id,
-        timestamp: new Date().toISOString(),
-      };
-      const qrDataString = JSON.stringify(qrDataPayload);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const qrDataString = frontendUrl + '/verify/' + productId;
       
       const qrFilename = `qr-${productId}.png`;
       const qrFilePath = path.join(qrDir, qrFilename);

@@ -51,14 +51,8 @@ exports.createProduct = async (req, res) => {
     const productId = `TT-${currentYear}-${sequence}`;
 
     // Generate QR Data Payload
-    const qrDataPayload = {
-      productId,
-      manufacturerId: req.user.id,
-      timestamp: new Date().toISOString(),
-      // The verification URL can be handled on the frontend based on ID, 
-      // but we embed the core data here.
-    };
-    const qrDataString = JSON.stringify(qrDataPayload);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const qrDataString = frontendUrl + '/verify/' + productId;
 
     // Generate QR Code Image
     const qrFilename = `qr-${productId}.png`;

@@ -10,8 +10,8 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     const products = await Product.find({});
     for (const product of products) {
-      const qrDataPayload = { productId: product.productId };
-      const qrDataString = JSON.stringify(qrDataPayload);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const qrDataString = frontendUrl + '/verify/' + product.productId;
       const qrFilename = `qr-${product.productId}.png`;
       const qrFilePath = path.join(__dirname, 'uploads/qrcodes', qrFilename);
       

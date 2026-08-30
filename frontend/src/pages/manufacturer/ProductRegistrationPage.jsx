@@ -295,7 +295,7 @@ const ProductRegistrationPage = () => {
                     <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${successData.qrImageUrl}`} className="w-32 h-32" alt="QR" />
                   </div>
                   <div className="flex gap-2">
-                    <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${successData.qrImageUrl}`} download={`QR-${successData.productId}.png`} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm"><FiDownload /></a>
+                    <a href="#" onClick={(e) => handleDownloadQR(e, `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'}${successData.qrImageUrl}`, `QR-${successData.productId}.png`)} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm"><FiDownload /></a>
                   </div>
                 </div>
               </div>
@@ -314,6 +314,26 @@ const ProductRegistrationPage = () => {
       </div>
     );
   }
+
+  const handleDownloadQR = async (e, url, filename) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download QR code');
+    }
+  };
 
   return (
     <div className="space-y-6 h-full flex flex-col">

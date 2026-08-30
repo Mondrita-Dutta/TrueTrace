@@ -41,17 +41,24 @@ const Navbar = () => {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8">
-          <ul className="flex space-x-6">
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <Link 
-                  to={link.path} 
-                  className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === link.path ? 'text-primary' : 'text-slate-600 dark:text-slate-300'}`}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
+          <ul className="flex items-center space-x-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md px-1.5 py-1.5 rounded-full border border-slate-200/50 dark:border-slate-700/50">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <li key={link.name}>
+                  <Link 
+                    to={link.path} 
+                    className={`block px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                      isActive 
+                        ? 'bg-white dark:bg-slate-900 text-primary shadow-sm' 
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           
           <div className="flex items-center space-x-4">
@@ -138,3 +145,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

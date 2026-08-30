@@ -85,26 +85,7 @@ const ProductsPage = () => {
     const timer = setTimeout(() => {
       fetchProducts(1);
     }, 500);
-    const handleDownloadQR = async (e, url, filename) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast.error('Failed to download QR code');
-    }
-  };
-
-  return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [searchQuery, categoryFilter, statusFilter, sortBy, sortOrder]);
 
   const handleRegisterClick = () => {
@@ -334,6 +315,26 @@ const ProductsPage = () => {
       </td>
     </tr>
   );
+
+  const handleDownloadQR = async (e, url, filename) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download QR code');
+    }
+  };
 
   return (
     <div className="space-y-6 h-full flex flex-col">

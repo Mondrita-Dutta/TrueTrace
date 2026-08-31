@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaCheck } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const PricingPage = () => {
   const plans = [
@@ -10,6 +11,7 @@ const PricingPage = () => {
       description: "Perfect for small businesses starting with blockchain tracing.",
       features: ["Up to 100 products/month", "Basic Analytics", "Community Support", "Standard Blockchain Verification"],
       buttonText: "Get Started Free",
+      link: "/register",
       isPopular: false
     },
     {
@@ -18,6 +20,7 @@ const PricingPage = () => {
       description: "Advanced features for growing manufacturers.",
       features: ["Up to 5,000 products/month", "Advanced Analytics Dashboard", "Priority Email Support", "Custom Branding on Verification", "API Access"],
       buttonText: "Start 14-Day Trial",
+      link: "/register",
       isPopular: true
     },
     {
@@ -26,6 +29,7 @@ const PricingPage = () => {
       description: "Tailored solutions for large scale manufacturing operations.",
       features: ["Unlimited products", "Custom Integration Solutions", "Dedicated Account Manager", "On-Premise Deployment Options", "SLA Guarantee"],
       buttonText: "Contact Sales",
+      link: "/contact",
       isPopular: false
     }
   ];
@@ -56,11 +60,12 @@ const PricingPage = () => {
             key={plan.name}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -10, transition: { duration: 0.2 } }}
             transition={{ delay: index * 0.1 + 0.2 }}
-            className={`relative p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex flex-col ${plan.isPopular ? 'ring-2 ring-primary scale-105 z-10' : 'border border-slate-200 dark:border-slate-700'}`}
+            className={`relative p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex flex-col hover:shadow-2xl transition-shadow duration-300 ${plan.isPopular ? 'ring-2 ring-primary scale-105 z-10' : 'border border-slate-200 dark:border-slate-700'}`}
           >
             {plan.isPopular && (
-              <div className="absolute top-0 right-0 -mr-2 -mt-2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+              <div className="absolute top-0 right-0 -mr-2 -mt-2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-lg">
                 Most Popular
               </div>
             )}
@@ -82,9 +87,12 @@ const PricingPage = () => {
               ))}
             </ul>
             
-            <button className={`mt-8 w-full py-3 px-6 rounded-lg font-bold text-center transition-colors ${plan.isPopular ? 'bg-primary hover:bg-primary-dark text-white' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white'}`}>
+            <Link 
+              to={plan.link}
+              className={`mt-8 w-full py-3 px-6 rounded-lg font-bold text-center block transition-all duration-300 hover:scale-105 active:scale-95 ${plan.isPopular ? 'bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white shadow-sm hover:shadow-md'}`}
+            >
               {plan.buttonText}
-            </button>
+            </Link>
           </motion.div>
         ))}
       </div>

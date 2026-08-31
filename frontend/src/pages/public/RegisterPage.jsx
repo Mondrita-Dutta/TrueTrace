@@ -213,7 +213,7 @@ const RegisterPage = () => {
                 className="mt-1 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900" 
               />
               <label htmlFor="terms" className="ml-2 text-sm text-slate-600 dark:text-slate-400">
-                I agree to the <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                I agree to the <Link to="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link> and <Link to="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>
               </label>
             </div>
             {errors.terms && <p className="text-danger text-xs">{errors.terms.message}</p>}

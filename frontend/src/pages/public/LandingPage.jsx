@@ -27,9 +27,9 @@ const LandingPage = () => {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
     
-    if (mediaQuery.matches || isTouch) return;
+    
+    if (mediaQuery.matches) return;
 
     const updateGlowPosition = () => {
       const dx = targetMousePosition.current.x - currentGlowPosition.current.x;
@@ -69,9 +69,9 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div ref={pageRef} onMouseMove={handleMouseMove} className="flex flex-col relative group min-h-screen">
+    <div ref={pageRef} onMouseMove={handleMouseMove} className="flex flex-col relative group min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Global Interactive Mouse Glow & Highlighted Grid (Hidden on Mobile/Reduced Motion) */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 hidden sm:block motion-reduce:hidden z-0 pointer-events-none">
+      <div className="absolute inset-0 hidden sm:block motion-reduce:hidden z-0 pointer-events-none">
         {/* Soft Radial Glow */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -83,7 +83,7 @@ const LandingPage = () => {
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.6) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.8) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.8) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
             maskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
             WebkitMaskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
@@ -91,7 +91,7 @@ const LandingPage = () => {
         />
       </div>
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-32 bg-slate-50/90 dark:bg-slate-950/90 z-10">
+      <section className="relative overflow-hidden pt-20 pb-32 bg-transparent z-10">
         
         {/* Animated Particle Network Background (Idea 2) */}
         {/* Animated Grid & Glow Background (Idea 3) */}
@@ -182,7 +182,7 @@ const LandingPage = () => {
       </section>
 
       {/* Statistics */}
-      <section className="py-12 bg-white/90 dark:bg-slate-900/90 border-y border-slate-100/50 dark:border-slate-800/50 relative z-10">
+      <section className="py-12 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border-y border-slate-100/10 dark:border-slate-800/50 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {[
@@ -206,7 +206,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-slate-50/90 dark:bg-slate-950/90 relative z-10">
+      <section className="py-24 bg-transparent relative z-10">
         <div className="container mx-auto px-4">
           <SectionTitle 
             center 
@@ -232,7 +232,7 @@ const LandingPage = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-white/90 dark:bg-slate-900/90 relative z-10">
+      <section className="py-24 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center gap-16">
             <div className="w-full md:w-1/2">
@@ -292,7 +292,7 @@ const LandingPage = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-24 bg-slate-50/90 dark:bg-slate-950/90 relative z-10">
+      <section className="py-24 bg-transparent relative z-10">
         <div className="container mx-auto px-4 max-w-3xl">
           <SectionTitle center title="Frequently Asked Questions" />
           <div className="space-y-4">

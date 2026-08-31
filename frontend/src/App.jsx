@@ -7,6 +7,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import LandingPage from './pages/public/LandingPage';
 import PrivacyPage from './pages/public/PrivacyPage';
 import TermsPage from './pages/public/TermsPage';
+import PricingPage from './pages/public/PricingPage';
 import FeaturesPage from './pages/public/FeaturesPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
@@ -58,6 +59,7 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify/:productId?" element={<VerificationPortal />} />

@@ -28,7 +28,7 @@ const DashboardHeader = () => (
 
 const DashboardLayout = () => {
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-light dark:bg-bg-dark font-primary text-slate-800 dark:text-slate-200">
+    <div className="flex h-screen overflow-hidden font-primary text-slate-800 dark:text-slate-200 bg-transparent">
       <Sidebar />
       <div className="flex flex-col flex-1">
         <DashboardHeader />

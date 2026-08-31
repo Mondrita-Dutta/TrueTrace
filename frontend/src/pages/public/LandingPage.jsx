@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaShieldAlt, FaQrcode, FaChartLine, FaChevronDown } from 'react-icons/fa';
@@ -69,27 +69,8 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div ref={pageRef} onMouseMove={handleMouseMove} className="flex flex-col relative group min-h-screen bg-slate-50 dark:bg-slate-950">
-      {/* Global Interactive Mouse Glow & Highlighted Grid (Hidden on Mobile/Reduced Motion) */}
-      <div className="absolute inset-0 hidden sm:block motion-reduce:hidden z-0 pointer-events-none">
-        {/* Soft Radial Glow */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle 350px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(42, 157, 143, 0.15), transparent 80%)'
-          }}
-        />
-        {/* Highlighted Neon Grid */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.8) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.8) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-            maskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
-          }}
-        />
-      </div>
+    <div className="flex flex-col relative group min-h-screen bg-transparent">
+
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-20 pb-32 bg-transparent z-10">
         

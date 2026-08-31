@@ -7,7 +7,7 @@ const AdminDashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-light dark:bg-bg-dark font-primary text-slate-800 dark:text-slate-200 transition-colors duration-200">
+    <div className="flex h-screen overflow-hidden font-primary text-slate-800 dark:text-slate-200 transition-colors duration-200 bg-transparent">
       {/* Sidebar - Handles both mobile and desktop states internally */}
       <AdminSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 

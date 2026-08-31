@@ -11,47 +11,7 @@ const LandingPage = () => {
 
   const [metricsCount, setMetricsCount] = useState("...");
 
-  const targetMousePosition = useRef({ x: -1000, y: -1000 });
-  const currentGlowPosition = useRef({ x: -1000, y: -1000 });
-  const rafId = useRef(null);
-  const pageRef = useRef(null);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!pageRef.current) return;
-    const rect = pageRef.current.getBoundingClientRect();
-    targetMousePosition.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-  }, []);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    
-    
-    if (mediaQuery.matches) return;
-
-    const updateGlowPosition = () => {
-      const dx = targetMousePosition.current.x - currentGlowPosition.current.x;
-      const dy = targetMousePosition.current.y - currentGlowPosition.current.y;
-      
-      currentGlowPosition.current.x += dx * 0.1;
-      currentGlowPosition.current.y += dy * 0.1;
-
-      if (pageRef.current) {
-        pageRef.current.style.setProperty('--mouse-x', `${currentGlowPosition.current.x}px`);
-        pageRef.current.style.setProperty('--mouse-y', `${currentGlowPosition.current.y}px`);
-      }
-
-      rafId.current = requestAnimationFrame(updateGlowPosition);
-    };
-
-    rafId.current = requestAnimationFrame(updateGlowPosition);
-
-    return () => {
-      if (rafId.current) cancelAnimationFrame(rafId.current);
-    };
-  }, []);
 
 
   useEffect(() => {

@@ -14,11 +14,11 @@ const LandingPage = () => {
   const targetMousePosition = useRef({ x: -1000, y: -1000 });
   const currentGlowPosition = useRef({ x: -1000, y: -1000 });
   const rafId = useRef(null);
-  const heroRef = useRef(null);
+  const pageRef = useRef(null);
 
   const handleMouseMove = useCallback((e) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
+    if (!pageRef.current) return;
+    const rect = pageRef.current.getBoundingClientRect();
     targetMousePosition.current = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
@@ -38,9 +38,9 @@ const LandingPage = () => {
       currentGlowPosition.current.x += dx * 0.1;
       currentGlowPosition.current.y += dy * 0.1;
 
-      if (heroRef.current) {
-        heroRef.current.style.setProperty('--mouse-x', `${currentGlowPosition.current.x}px`);
-        heroRef.current.style.setProperty('--mouse-y', `${currentGlowPosition.current.y}px`);
+      if (pageRef.current) {
+        pageRef.current.style.setProperty('--mouse-x', `${currentGlowPosition.current.x}px`);
+        pageRef.current.style.setProperty('--mouse-y', `${currentGlowPosition.current.y}px`);
       }
 
       rafId.current = requestAnimationFrame(updateGlowPosition);
@@ -69,9 +69,29 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="flex flex-col">
+    <div ref={pageRef} onMouseMove={handleMouseMove} className="flex flex-col relative group min-h-screen">
+      {/* Global Interactive Mouse Glow & Highlighted Grid (Hidden on Mobile/Reduced Motion) */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 hidden sm:block motion-reduce:hidden z-0 pointer-events-none">
+        {/* Soft Radial Glow */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle 350px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(42, 157, 143, 0.15), transparent 80%)'
+          }}
+        />
+        {/* Highlighted Neon Grid */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.6) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+            maskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
+          }}
+        />
+      </div>
       {/* Hero Section */}
-      <section ref={heroRef} onMouseMove={handleMouseMove} className="relative overflow-hidden pt-20 pb-32 bg-slate-50 dark:bg-slate-950 group">
+      <section className="relative overflow-hidden pt-20 pb-32 bg-slate-50/90 dark:bg-slate-950/90 z-10">
         
         {/* Animated Particle Network Background (Idea 2) */}
         {/* Animated Grid & Glow Background (Idea 3) */}
@@ -88,28 +108,6 @@ const LandingPage = () => {
               WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)'
             }}
           />
-          
-
-          {/* Interactive Mouse Glow & Highlighted Grid (Hidden on Mobile/Reduced Motion) */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 hidden sm:block motion-reduce:hidden z-0 pointer-events-none">
-            {/* Soft Radial Glow */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle 350px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(42, 157, 143, 0.15), transparent 80%)'
-              }}
-            />
-            {/* Highlighted Neon Grid */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage: 'linear-gradient(to right, rgba(42, 157, 143, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(42, 157, 143, 0.6) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-                maskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(circle 250px at var(--mouse-x, -1000px) var(--mouse-y, -1000px), black 0%, transparent 100%)',
-              }}
-            />
-          </div>
 
           {/* Central Breathing Glow */}
           <motion.div 
@@ -184,7 +182,7 @@ const LandingPage = () => {
       </section>
 
       {/* Statistics */}
-      <section className="py-12 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+      <section className="py-12 bg-white/90 dark:bg-slate-900/90 border-y border-slate-100/50 dark:border-slate-800/50 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {[
@@ -208,7 +206,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-slate-50 dark:bg-slate-950">
+      <section className="py-24 bg-slate-50/90 dark:bg-slate-950/90 relative z-10">
         <div className="container mx-auto px-4">
           <SectionTitle 
             center 
@@ -234,7 +232,7 @@ const LandingPage = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-white dark:bg-slate-900">
+      <section className="py-24 bg-white/90 dark:bg-slate-900/90 relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center gap-16">
             <div className="w-full md:w-1/2">
@@ -294,7 +292,7 @@ const LandingPage = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-24 bg-slate-50 dark:bg-slate-950">
+      <section className="py-24 bg-slate-50/90 dark:bg-slate-950/90 relative z-10">
         <div className="container mx-auto px-4 max-w-3xl">
           <SectionTitle center title="Frequently Asked Questions" />
           <div className="space-y-4">
@@ -310,7 +308,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-24 relative overflow-hidden bg-primary">
+      <section className="py-24 relative overflow-hidden bg-primary/95 z-10">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to protect your brand?</h2>

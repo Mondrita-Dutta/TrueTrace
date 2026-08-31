@@ -11,6 +11,8 @@
 
   <h3>🚀 Live Production Deployment: https://true-trace-phi.vercel.app/</h3>
   <h3>🎥 Demo Video Walkthrough: https://drive.google.com/file/d/1_pYjiXmi5TKP7yDDcMiWtmJfUx1CDLAy/view?usp=drivesdk</h3>
+  <h3>🔗 User wallet interactions:https://docs.google.com/spreadsheets/d/13kiGrDQKRWCqQvcO97PAoAkYnGbBrQ2SOHBwgZbOsYg/edit?usp=sharing</h3>
+
 
 *"TrueTrace is a Web3 supply chain verification platform that allows manufacturers to register products securely on the Stellar blockchain, providing consumers with an immutable source of truth to verify the authenticity and lifecycle of their purchases."*
 

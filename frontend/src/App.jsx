@@ -8,6 +8,8 @@ import LandingPage from './pages/public/LandingPage';
 import PrivacyPage from './pages/public/PrivacyPage';
 import TermsPage from './pages/public/TermsPage';
 import PricingPage from './pages/public/PricingPage';
+import DocsPage from './pages/public/DocsPage';
+import ApiPage from './pages/public/ApiPage';
 import FeaturesPage from './pages/public/FeaturesPage';
 import AboutPage from './pages/public/AboutPage';
 import ContactPage from './pages/public/ContactPage';
@@ -60,6 +62,8 @@ function App() {
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/docs" element={<DocsPage />} />
+              <Route path="/api" element={<ApiPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify/:productId?" element={<VerificationPortal />} />

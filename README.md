@@ -230,6 +230,18 @@ node deploy_contract.js
 
 ---
 
+### 💡 Basic User Feedback Summary
+
+* **Overall response:** Mostly positive
+* **What users liked:** Easy-to-use interface, QR-based verification, and the concept of detecting counterfeit products.
+* **Common strengths:** Simple design, useful functionality, and a practical solution to a real-world problem.
+* **Suggested improvements:** Add more product details, support more brands/categories, improve verification results, and include product history or reporting features.
+* **Overall conclusion:** Users found TrueTrace to be a promising and useful application with strong potential for further development.
+
+
+
+---
+
 
 
 

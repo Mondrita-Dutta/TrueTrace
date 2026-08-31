@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { trackEvent } from '../utils/analytics';
 
 const AuthContext = createContext();
 
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       setUser(userData);
       setIsAuthenticated(true);
+      trackEvent('User Login', { method: 'email', role: userData.role });
       return res.data;
     } catch (error) {
       throw error.response?.data || { message: 'Network error occurred' };
@@ -49,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       setUser(userData);
       setIsAuthenticated(true);
+      trackEvent('User Login', { method: 'wallet', role: userData.role });
       return res.data;
     } catch (error) {
       throw error.response?.data || { message: 'Wallet authentication failed' };
@@ -63,6 +66,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       setUser(newUserData);
       setIsAuthenticated(true);
+      trackEvent('User Signup', { role: newUserData.role });
       return res.data;
     } catch (error) {
       throw error.response?.data || { message: 'Network error occurred' };
@@ -73,6 +77,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setUser(null);
     setIsAuthenticated(false);
+    trackEvent('User Logout');
   };
 
   const updateProfile = async (profileData) => {

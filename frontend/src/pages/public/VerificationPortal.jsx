@@ -128,6 +128,8 @@ const VerificationPortal = () => {
       setResult(res);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to verify product.');
+      trackEvent('Verification Failed');
+      logError('Verification Portal', err);
     } finally {
       setLoading(false);
     }

@@ -8,6 +8,7 @@ import productService from '../../services/productService';
 import { connectFreighter, signXLMTransaction } from '../../utils/freighterUtils';
 import { buildRegisterProductTx, submitSorobanTransaction } from '../../services/stellarService';
 import { useAuth } from '../../context/AuthContext';
+import { trackEvent } from '../../utils/analytics';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const ProductDetailsPage = () => {
         setLoading(true);
         const res = await productService.getProductById(id);
         setProduct(res.data);
+          trackEvent('Product Details Viewed');
       } catch (err) {
         toast.error('Failed to load product details');
         navigate('/manufacturer/products');

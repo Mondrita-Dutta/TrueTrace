@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { trackEvent } from '../../utils/analytics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaShieldAlt, FaQrcode, FaChartLine, FaChevronDown } from 'react-icons/fa';
 import Button from '../../components/ui/Button';
@@ -112,10 +113,10 @@ const LandingPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4"
           >
-            <Link to="/verify" className="w-full sm:w-auto">
+            <Link to="/verify" className="w-full sm:w-auto" onClick={() => trackEvent('Important CTA Buttons Clicked', { button: 'Start Verifying' })}>
               <Button size="lg" className="w-full">Start Verifying</Button>
             </Link>
-            <Link to="/register" state={{ role: 'manufacturer' }} className="w-full sm:w-auto">
+            <Link to="/register" state={{ role: 'manufacturer' }} className="w-full sm:w-auto" onClick={() => trackEvent('Important CTA Buttons Clicked', { button: 'Register as Manufacturer' })}>
               <Button variant="outline" size="lg" className="w-full bg-white/50 backdrop-blur-sm dark:bg-slate-900/50">Register as Manufacturer</Button>
             </Link>
           </motion.div>
@@ -257,10 +258,10 @@ const LandingPage = () => {
             Join hundreds of manufacturers using TrueTrace to secure their supply chain and build unshakeable trust with customers.
           </p>
           <div className="flex justify-center gap-4">
-            <Link to="/register">
+            <Link to="/register" onClick={() => trackEvent('Important CTA Buttons Clicked', { button: 'Create Free Account' })}>
               <Button size="lg" className="bg-white text-primary hover:bg-slate-100">Create Free Account</Button>
             </Link>
-            <Link to="/contact">
+            <Link to="/contact" onClick={() => trackEvent('Important CTA Buttons Clicked', { button: 'Contact Sales' })}>
               <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 dark:border-white dark:text-white dark:hover:bg-white/10">Contact Sales</Button>
             </Link>
           </div>

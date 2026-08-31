@@ -4,6 +4,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { FiSearch, FiAlertCircle, FiCamera, FiUploadCloud, FiType, FiX, FiArrowLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import jsQR from 'jsqr';
+import { trackEvent, logError } from '../../utils/analytics';
 
 const ScannerPage = () => {
   const navigate = useNavigate();
@@ -85,6 +86,7 @@ const ScannerPage = () => {
   };
 
   const handleSuccessfulScan = async (decodedText) => {
+    trackEvent('QR Scan Completed');
     await stopScanning();
     
     let productId = decodedText.trim();

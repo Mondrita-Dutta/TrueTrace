@@ -6,6 +6,8 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { NotificationProvider } from './context/NotificationContext.jsx'
 import { SearchProvider } from './context/SearchContext.jsx'
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import React from 'react';
 
@@ -38,6 +40,8 @@ createRoot(document.getElementById('root')).render(
           <NotificationProvider>
             <SearchProvider>
               <App />
+              <Analytics />
+              <SpeedInsights />
             </SearchProvider>
           </NotificationProvider>
         </AuthProvider>

@@ -170,7 +170,7 @@ const ProductsPage = () => {
           successCount++;
         } catch (err) {
           console.error("Publishing error for product", product._id, err);
-          toast.error(`Failed to publish ${product.productName}`);
+          toast.error(`Failed to publish ${product.productName}: ${err.message || err.toString()}`);
           if (err.message && err.message.toLowerCase().includes('declined')) {
             toast.info('Publishing stopped because signature was declined.');
             break;

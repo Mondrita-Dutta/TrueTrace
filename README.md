@@ -168,6 +168,10 @@ TrueTrace/
 <img width="1114" height="675" alt="image" src="https://github.com/user-attachments/assets/6c509a0b-9427-4cb1-992a-5e17c2f3be42" />
 <img width="870" height="470" alt="image" src="https://github.com/user-attachments/assets/a76080d0-1034-4c16-a98f-171095061d66" />
 
+### User Interation (AS this feature is added lately , so real number of users are a way higher than whats showing now in analytics )
+<img width="1546" height="1077" alt="WhatsApp Image 2026-09-01 at 10 30 45" src="https://github.com/user-attachments/assets/dca143e2-8762-4286-9b52-1100ddc3cb13" />
+
+
 ---
 ## 🌐 Deployed Smart Contract:
 
